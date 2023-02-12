@@ -1,0 +1,942 @@
+{
+  "category": "ADC/DAC/Data Conversion",
+  "components": [
+    [
+      "C459871",
+      "AD2S1210WDSTZRL7",
+      48,
+      "LQFP-48  ADC/DAC - Specialized ROHS",
+      "https://datasheet.lcsc.com/lcsc/2203261130_Analog-Devices-AD2S1210WDSTZRL7_C459871.pdf",
+      [
+        {
+          "price": 19.07761194,
+          "qFrom": 1,
+          "qTo": 9
+        },
+        {
+          "price": 18.334328358,
+          "qFrom": 10,
+          "qTo": 29
+        },
+        {
+          "price": 17.043283582,
+          "qFrom": 30,
+          "qTo": 99
+        },
+        {
+          "price": 13.949253731,
+          "qFrom": 100,
+          "qTo": 101
+        },
+        {
+          "price": 13.949253731,
+          "qFrom": 102,
+          "qTo": 103
+        },
+        {
+          "price": 13.949253731,
+          "qFrom": 104,
+          "qTo": null
+        }
+      ],
+      "20220407_Analog-Devices-AD2S1210WDSTZRL7_C459871_back.jpg",
+      "ADC-DAC---Specialized_Analog-Devices-Analog-Devices-AD2S1210WDSTZRL7",
+      {
+        "Basic/Extended": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Extended",
+              "string"
+            ]
+          }
+        },
+        "Manufacturer": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Analog Devices",
+              "string"
+            ]
+          }
+        },
+        "Package": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "LQFP-48",
+              "string"
+            ]
+          }
+        },
+        "Status": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Active",
+              "string"
+            ]
+          }
+        }
+      }
+    ],
+    [
+      "C880670",
+      "MAX197AEAI+",
+      28,
+      "SSOP-28  ADC/DAC - Specialized ROHS",
+      "https://datasheet.lcsc.com/lcsc/2202281730_Maxim-Integrated-MAX197AEAI-_C880670.pdf",
+      [
+        {
+          "price": 24.692537313,
+          "qFrom": 1,
+          "qTo": 2
+        },
+        {
+          "price": 24.692537313,
+          "qFrom": 3,
+          "qTo": 4
+        },
+        {
+          "price": 24.692537313,
+          "qFrom": 5,
+          "qTo": 29
+        },
+        {
+          "price": 21.453731343,
+          "qFrom": 30,
+          "qTo": 33
+        },
+        {
+          "price": 21.453731343,
+          "qFrom": 34,
+          "qTo": 35
+        },
+        {
+          "price": 21.453731343,
+          "qFrom": 36,
+          "qTo": null
+        }
+      ],
+      "20220407_Maxim-Integrated-MAX197AEAI-_C880670_back.jpg",
+      "ADC-DAC---Specialized_Maxim-Integrated-Maxim-Integrated-MAX197AEAI%2B",
+      {
+        "Basic/Extended": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Extended",
+              "string"
+            ]
+          }
+        },
+        "Manufacturer": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Maxim Integrated",
+              "string"
+            ]
+          }
+        },
+        "Package": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "SSOP-28",
+              "string"
+            ]
+          }
+        },
+        "Status": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Active",
+              "string"
+            ]
+          }
+        }
+      }
+    ],
+    [
+      "C2864564",
+      "PCM1840IRTWR",
+      25,
+      "WQFN-24  ADC/DAC - Specialized ROHS",
+      "https://www.ti.com/cn/lit/gpn/pcm1840",
+      [
+        {
+          "price": 11.764179104,
+          "qFrom": 1,
+          "qTo": 9
+        },
+        {
+          "price": 11.325373134,
+          "qFrom": 10,
+          "qTo": 29
+        },
+        {
+          "price": 10.562686567,
+          "qFrom": 30,
+          "qTo": 99
+        },
+        {
+          "price": 8.876119403,
+          "qFrom": 100,
+          "qTo": 101
+        },
+        {
+          "price": 8.876119403,
+          "qFrom": 102,
+          "qTo": 103
+        },
+        {
+          "price": 8.876119403,
+          "qFrom": 104,
+          "qTo": null
+        }
+      ],
+      "20220906_Texas-Instruments-PCM1840IRTWR_C2864564_back.jpg",
+      "ADC-DAC---Specialized_Texas-Instruments-Texas-Instruments-PCM1840IRTWR",
+      {
+        "Basic/Extended": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Extended",
+              "string"
+            ]
+          }
+        },
+        "Manufacturer": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Texas Instruments",
+              "string"
+            ]
+          }
+        },
+        "Package": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "WQFN-24",
+              "string"
+            ]
+          }
+        },
+        "Status": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Active",
+              "string"
+            ]
+          }
+        }
+      }
+    ],
+    [
+      "C2887138",
+      "ES8156",
+      21,
+      "QFN-20  ADC/DAC - Specialized ROHS",
+      "https://datasheet.lcsc.com/lcsc/2209100430_Everest-semi-Everest-Semiconductor-ES8156_C2887138.pdf",
+      [
+        {
+          "price": 0.508955224,
+          "qFrom": 1,
+          "qTo": 9
+        },
+        {
+          "price": 0.423880597,
+          "qFrom": 10,
+          "qTo": 29
+        },
+        {
+          "price": 0.380597015,
+          "qFrom": 30,
+          "qTo": 99
+        },
+        {
+          "price": 0.337313433,
+          "qFrom": 100,
+          "qTo": 499
+        },
+        {
+          "price": 0.301492537,
+          "qFrom": 500,
+          "qTo": 999
+        },
+        {
+          "price": 0.288059701,
+          "qFrom": 1000,
+          "qTo": null
+        }
+      ],
+      "20220915_Everest-semi-Everest-Semiconductor-ES8156_C2887138_back.jpg",
+      "ADC-DAC---Specialized_Everest-semiEverest-Semiconductor-Everest-semiEverest-Semiconductor-ES8156",
+      {
+        "Basic/Extended": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Extended",
+              "string"
+            ]
+          }
+        },
+        "Manufacturer": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Everest-semi(Everest Semiconductor)",
+              "string"
+            ]
+          }
+        },
+        "Package": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "QFN-20-EP(3x3)",
+              "string"
+            ]
+          }
+        },
+        "Status": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Active",
+              "string"
+            ]
+          }
+        }
+      }
+    ],
+    [
+      "C2929446",
+      "ES7243E",
+      21,
+      "QFN-20  ADC/DAC - Specialized ROHS",
+      "https://datasheet.lcsc.com/lcsc/2208291730_Everest-semi-Everest-Semiconductor-ES7243E_C2929446.pdf",
+      [
+        {
+          "price": 0.449253731,
+          "qFrom": 1,
+          "qTo": 9
+        },
+        {
+          "price": 0.362686567,
+          "qFrom": 10,
+          "qTo": 29
+        },
+        {
+          "price": 0.323880597,
+          "qFrom": 30,
+          "qTo": 99
+        },
+        {
+          "price": 0.27761194,
+          "qFrom": 100,
+          "qTo": 499
+        },
+        {
+          "price": 0.247761194,
+          "qFrom": 500,
+          "qTo": 999
+        },
+        {
+          "price": 0.235820896,
+          "qFrom": 1000,
+          "qTo": null
+        }
+      ],
+      null,
+      "ADC-DAC---Specialized_Everest-semiEverest-Semiconductor-Everest-semiEverest-Semiconductor-ES7243E",
+      {
+        "Basic/Extended": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Extended",
+              "string"
+            ]
+          }
+        },
+        "Manufacturer": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Everest-semi(Everest Semiconductor)",
+              "string"
+            ]
+          }
+        },
+        "Package": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "QFN-20",
+              "string"
+            ]
+          }
+        },
+        "Status": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Active",
+              "string"
+            ]
+          }
+        }
+      }
+    ],
+    [
+      "C2988283",
+      "MAX1452AAE+T",
+      16,
+      "SSOP-16  ADC/DAC - Specialized ROHS",
+      "https://datasheet.lcsc.com/lcsc/2203311630_Maxim-Integrated-MAX1452AAE-T_C2988283.pdf",
+      [
+        {
+          "price": 2.771641791,
+          "qFrom": 1,
+          "qTo": 9
+        },
+        {
+          "price": 2.404477612,
+          "qFrom": 10,
+          "qTo": 29
+        },
+        {
+          "price": 2.186567164,
+          "qFrom": 30,
+          "qTo": 99
+        },
+        {
+          "price": 1.888059701,
+          "qFrom": 100,
+          "qTo": 499
+        },
+        {
+          "price": 1.786567164,
+          "qFrom": 500,
+          "qTo": 999
+        },
+        {
+          "price": 1.740298507,
+          "qFrom": 1000,
+          "qTo": null
+        }
+      ],
+      "20220415_Maxim-Integrated-MAX1452AAE-T_C2988283_back.jpg",
+      "ADC-DAC---Specialized_Maxim-Integrated-Maxim-Integrated-MAX1452AAE%2BT",
+      {
+        "Basic/Extended": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Extended",
+              "string"
+            ]
+          }
+        },
+        "Manufacturer": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Maxim Integrated",
+              "string"
+            ]
+          }
+        },
+        "Package": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "SSOP-16-208mil",
+              "string"
+            ]
+          }
+        },
+        "Status": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Active",
+              "string"
+            ]
+          }
+        }
+      }
+    ],
+    [
+      "C3020261",
+      "GP9303T-F100-N-SW",
+      8,
+      "SOP-8  ADC/DAC - Specialized ROHS",
+      "https://datasheet.lcsc.com/lcsc/2207041845_Guestgood-GP9303T-F100-N-SW_C3020261.pdf",
+      [
+        {
+          "price": 0.63880597,
+          "qFrom": 1,
+          "qTo": 9
+        },
+        {
+          "price": 0.531343284,
+          "qFrom": 10,
+          "qTo": 29
+        },
+        {
+          "price": 0.47761194,
+          "qFrom": 30,
+          "qTo": 99
+        },
+        {
+          "price": 0.410447761,
+          "qFrom": 100,
+          "qTo": 499
+        },
+        {
+          "price": 0.379104478,
+          "qFrom": 500,
+          "qTo": 999
+        },
+        {
+          "price": 0.362686567,
+          "qFrom": 1000,
+          "qTo": null
+        }
+      ],
+      "20220728_Guestgood-GP9303T-F100-N-SW_C3020261_back.jpg",
+      "ADC-DAC---Specialized_Guestgood-Guestgood-GP9303T-F100-N-SW",
+      {
+        "Basic/Extended": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Extended",
+              "string"
+            ]
+          }
+        },
+        "Manufacturer": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Guestgood",
+              "string"
+            ]
+          }
+        },
+        "Package": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "SOP-8",
+              "string"
+            ]
+          }
+        },
+        "Status": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Active",
+              "string"
+            ]
+          }
+        }
+      }
+    ],
+    [
+      "C3020371",
+      "GP9303T-F1K-N-SW",
+      8,
+      "SOP-8  ADC/DAC - Specialized ROHS",
+      "https://datasheet.lcsc.com/lcsc/2208251800_Guestgood-GP9303T-F1K-N-SW_C3020371.pdf",
+      [
+        {
+          "price": 0.640298507,
+          "qFrom": 1,
+          "qTo": 9
+        },
+        {
+          "price": 0.532835821,
+          "qFrom": 10,
+          "qTo": 29
+        },
+        {
+          "price": 0.479104478,
+          "qFrom": 30,
+          "qTo": 99
+        },
+        {
+          "price": 0.410447761,
+          "qFrom": 100,
+          "qTo": 499
+        },
+        {
+          "price": 0.379104478,
+          "qFrom": 500,
+          "qTo": 999
+        },
+        {
+          "price": 0.362686567,
+          "qFrom": 1000,
+          "qTo": null
+        }
+      ],
+      "20220917_Guestgood-GP9303T-F1K-N-SW_C3020371_back.jpg",
+      "ADC-DAC---Specialized_Guestgood-Guestgood-GP9303T-F1K-N-SW",
+      {
+        "Basic/Extended": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Extended",
+              "string"
+            ]
+          }
+        },
+        "Manufacturer": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Guestgood",
+              "string"
+            ]
+          }
+        },
+        "Package": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "SOP-8",
+              "string"
+            ]
+          }
+        },
+        "Status": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Active",
+              "string"
+            ]
+          }
+        }
+      }
+    ],
+    [
+      "C5145122",
+      "ES8327",
+      33,
+      "QFN-32  ADC/DAC - Specialized ROHS",
+      "https://datasheet.lcsc.com/lcsc/2208291400_Everest-semi-Everest-Semiconductor-ES8327_C5145122.pdf",
+      [
+        {
+          "price": 0.917910448,
+          "qFrom": 1,
+          "qTo": 9
+        },
+        {
+          "price": 0.774626866,
+          "qFrom": 10,
+          "qTo": 29
+        },
+        {
+          "price": 0.697014925,
+          "qFrom": 30,
+          "qTo": 99
+        },
+        {
+          "price": 0.58358209,
+          "qFrom": 100,
+          "qTo": 499
+        },
+        {
+          "price": 0.543283582,
+          "qFrom": 500,
+          "qTo": 999
+        },
+        {
+          "price": 0.525373134,
+          "qFrom": 1000,
+          "qTo": null
+        }
+      ],
+      null,
+      "ADC-DAC---Specialized_Everest-semiEverest-Semiconductor-Everest-semiEverest-Semiconductor-ES8327",
+      {
+        "Basic/Extended": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Extended",
+              "string"
+            ]
+          }
+        },
+        "Manufacturer": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Everest-semi(Everest Semiconductor)",
+              "string"
+            ]
+          }
+        },
+        "Package": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "QFN-32",
+              "string"
+            ]
+          }
+        },
+        "Status": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Active",
+              "string"
+            ]
+          }
+        },
+        "category": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              {
+                "id1": 601,
+                "id2": 11295,
+                "name1": "ADC/DAC/Data Conversion",
+                "name2": "ADC/DAC - Specialized"
+              },
+              "string"
+            ]
+          }
+        },
+        "description": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              " QFN-32  ADC/DAC - Specialized ROHS",
+              "string"
+            ]
+          }
+        },
+        "moq": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              1,
+              "string"
+            ]
+          }
+        },
+        "mpn": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "ES8327",
+              "string"
+            ]
+          }
+        },
+        "order_multiple": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              1,
+              "string"
+            ]
+          }
+        },
+        "package": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "QFN-32",
+              "string"
+            ]
+          }
+        },
+        "packaging": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Tape & Reel (TR)",
+              "string"
+            ]
+          }
+        },
+        "packaging_num": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              5000,
+              "string"
+            ]
+          }
+        },
+        "rohs": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              true,
+              "string"
+            ]
+          }
+        }
+      }
+    ],
+    [
+      "C5145124",
+      "ES8336",
+      33,
+      "QFN-32  ADC/DAC - Specialized ROHS",
+      "https://datasheet.lcsc.com/lcsc/2208291400_Everest-semi-Everest-Semiconductor-ES8336_C5145124.pdf",
+      [
+        {
+          "price": 0.828358209,
+          "qFrom": 1,
+          "qTo": 9
+        },
+        {
+          "price": 0.688059701,
+          "qFrom": 10,
+          "qTo": 29
+        },
+        {
+          "price": 0.619402985,
+          "qFrom": 30,
+          "qTo": 99
+        },
+        {
+          "price": 0.529850746,
+          "qFrom": 100,
+          "qTo": 499
+        },
+        {
+          "price": 0.488059701,
+          "qFrom": 500,
+          "qTo": 999
+        },
+        {
+          "price": 0.465671642,
+          "qFrom": 1000,
+          "qTo": null
+        }
+      ],
+      null,
+      "ADC-DAC---Specialized_Everest-semiEverest-Semiconductor-Everest-semiEverest-Semiconductor-ES8336",
+      {
+        "Basic/Extended": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Extended",
+              "string"
+            ]
+          }
+        },
+        "Manufacturer": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Everest-semi(Everest Semiconductor)",
+              "string"
+            ]
+          }
+        },
+        "Package": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "QFN-32",
+              "string"
+            ]
+          }
+        },
+        "Status": {
+          "format": "${default}",
+          "primary": "default",
+          "values": {
+            "default": [
+              "Active",
+              "string"
+            ]
+          }
+        }
+      }
+    ]
+  ],
+  "schema": [
+    "lcsc",
+    "mfr",
+    "joints",
+    "description",
+    "datasheet",
+    "price",
+    "img",
+    "url",
+    "attributes"
+  ],
+  "subcategory": "ADC/DAC - Specialized"
+}
