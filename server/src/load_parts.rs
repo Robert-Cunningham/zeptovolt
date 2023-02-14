@@ -1,0 +1,98 @@
+use std::error::Error;
+
+use reqwest::Client;
+use serde_json::Value;
+
+use crate::{utils::cached_get, Part};
+
+pub async fn process_category(c: &Client, s: String) -> Result<Vec<Part>, Box<dyn Error>> {
+    let stock_info = serde_json::from_str(
+        &cached_get(
+            &c,
+            format!("https://yaqwsx.github.io/jlcparts/data/{}.stock.json", s),
+        )
+        .await?,
+    )?;
+
+    let stock_map = match stock_info {
+        Value::Object(m) => m,
+        _ => todo!(),
+    };
+
+    let part_info: Value = serde_json::from_str(
+        &cached_get(
+            &c,
+            format!("https://yaqwsx.github.io/jlcparts/data/{}.json.gz", s),
+        )
+        .await?,
+    )?;
+
+    let part_list = match &part_info["components"] {
+        Value::Array(a) => a,
+        _ => todo!(),
+    };
+
+    let out: Vec<_> = part_list
+        .iter()
+        .map(|p| Part {
+            lcsc_id: p[0].as_str().unwrap().into(),
+            manufacturer_id: p[1].as_str().unwrap().into(),
+            price: p[5][0]["price"].as_f64().unwrap(),
+            image_url: p[6].as_str().map(|x| x.into()),
+            basic_or_extended: p[8]["Basic/Extended"]["values"]["default"][0]
+                .as_str()
+                .unwrap()
+                .into(),
+            stock: stock_map
+                .get(p[0].as_str().expect("part number wasn't a string?"))
+                .expect("stock json didnt have info on part")
+                .as_i64()
+                .unwrap() as u64,
+        })
+        .collect();
+
+    Ok(out)
+}
+
+/*
+    {
+"categories": {
+    "ADC/DAC/Data Conversion": {
+    "ADC/DAC - Specialized": {
+        "datahash": "681014911c466e50eb7619b884ad71b1af31f9eee3eea085cc160c36435d3206",
+        "sourcename": "ADCakaDACakaData_ConversionADCakaDAC___Specialized",
+        "stockhash": "673d7ad2b4ed80cc31394981595d44b3e56390099829daa877b5e7652eafe028"
+    },
+}
+*/
+
+pub async fn get_categories(c: &Client) -> Result<Vec<String>, Box<dyn Error>> {
+    let out = cached_get(
+        c,
+        String::from("https://yaqwsx.github.io/jlcparts/data/index.json"),
+    )
+    .await?;
+
+    let v: Value = serde_json::from_str(&out)?;
+    let sources: Vec<String> = match &v["categories"] {
+        Value::Object(category) => category
+            .values()
+            .map(|subcat| match subcat {
+                Value::Object(subcat) => subcat
+                    .values()
+                    .map(|r| {
+                        r["sourcename"]
+                            .as_str()
+                            .expect("A sourcename was not a string?")
+                    })
+                    .collect::<Vec<_>>(),
+                _ => todo!(),
+            })
+            .flatten()
+            .map(|s| s.into())
+            .collect(),
+        _ => todo!(),
+    };
+
+    Ok(sources)
+}
