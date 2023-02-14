@@ -11,6 +11,7 @@ use std::error::Error;
 
 use crate::{
     load_parts::get_categories,
+    server::webserver,
     textsearch::{configure_redis, search_redis},
 };
 
@@ -54,7 +55,9 @@ async fn main() -> Result<(), Box<dyn Error>> {
     //     .progress()
     //     .for_each(|p| load_into_redis(&mut redis_con, p));
 
-    println!("{}", search_redis(&mut redis_con, "0603".to_string()).len());
+    // println!("{}", search_redis(&mut redis_con, "0603".to_string()).len());
+
+    webserver(redis_con).await;
 
     Ok(())
 }

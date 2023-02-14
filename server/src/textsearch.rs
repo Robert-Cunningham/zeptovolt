@@ -26,7 +26,7 @@ pub fn load_into_redis(con: &mut redis::Connection, part: &Part) -> () {
         .unwrap()
 }
 
-pub fn search_redis(con: &mut redis::Connection, string: String) -> Vec<String> {
+pub fn search_redis(con: &mut redis::Connection, string: String) -> Vec<Part> {
     let out: redis::Value = redis::cmd("FT.SEARCH")
         .arg("partIndex")
         .arg(format!(
@@ -52,12 +52,11 @@ pub fn search_redis(con: &mut redis::Connection, string: String) -> Vec<String> 
                 _ => panic!(),
             };
             let p: Part = serde_json::from_str(json_string).unwrap();
-            println!("{:?}", p);
-            return "".to_string();
+            return p;
         })
-        .collect::<Vec<String>>();
+        .collect::<Vec<Part>>();
 
-    return Vec::new();
+    return results;
 }
 
 const REDIS_CREATE_INDEX: &str = "partIndex ON JSON PREFIX 1 part: SCHEMA
