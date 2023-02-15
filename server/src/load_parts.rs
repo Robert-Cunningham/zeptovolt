@@ -1,3 +1,4 @@
+use anyhow::Result;
 use std::error::Error;
 
 use reqwest::Client;
@@ -5,7 +6,7 @@ use serde_json::Value;
 
 use crate::{utils::cached_get, Part};
 
-pub async fn process_category(c: &Client, s: String) -> Result<Vec<Part>, Box<dyn Error>> {
+pub async fn process_category(c: &Client, s: String) -> Result<Vec<Part>> {
     let stock_info = serde_json::from_str(
         &cached_get(
             &c,
@@ -37,8 +38,10 @@ pub async fn process_category(c: &Client, s: String) -> Result<Vec<Part>, Box<dy
         .map(|p| Part {
             lcsc_id: p[0].as_str().unwrap().into(),
             manufacturer_id: p[1].as_str().unwrap().into(),
-            price: p[5][0]["price"].as_f64().unwrap(),
+            description: p[3].as_str().unwrap().into(),
+            price: p[5][0]["price"].as_f64().unwrap() as f32,
             image_url: p[6].as_str().map(|x| x.into()),
+            datasheet_url: p[4].as_str().unwrap().to_string(),
             basic_or_extended: p[8]["Basic/Extended"]["values"]["default"][0]
                 .as_str()
                 .unwrap()
@@ -47,7 +50,7 @@ pub async fn process_category(c: &Client, s: String) -> Result<Vec<Part>, Box<dy
                 .get(p[0].as_str().expect("part number wasn't a string?"))
                 .expect("stock json didnt have info on part")
                 .as_i64()
-                .unwrap() as u64,
+                .unwrap() as u32,
         })
         .collect();
 
@@ -66,7 +69,7 @@ pub async fn process_category(c: &Client, s: String) -> Result<Vec<Part>, Box<dy
 }
 */
 
-pub async fn get_categories(c: &Client) -> Result<Vec<String>, Box<dyn Error>> {
+pub async fn get_categories(c: &Client) -> Result<Vec<String>> {
     let out = cached_get(
         c,
         String::from("https://yaqwsx.github.io/jlcparts/data/index.json"),

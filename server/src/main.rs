@@ -5,24 +5,32 @@ mod server;
 mod textsearch;
 mod utils;
 
+use futures::StreamExt;
+use indicatif::ProgressIterator;
+use par_stream::ParStreamExt;
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 
 use std::error::Error;
 
 use crate::{
-    load_parts::get_categories,
+    load_parts::{get_categories, process_category},
     server::webserver,
-    textsearch::{configure_redis, search_redis},
+    textsearch::{configure_redis, load_into_redis, search_redis},
 };
 
-#[derive(Serialize, Deserialize, Debug)]
+use anyhow::Result;
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Part {
     lcsc_id: String,
     manufacturer_id: String,
-    price: f64,
+    description: String,
+    price: f32,
     image_url: Option<String>,
+    datasheet_url: String,
     basic_or_extended: String, // todo
-    stock: u64,
+    stock: u32,
 }
 
 enum JLPCBStatus {
@@ -32,23 +40,23 @@ enum JLPCBStatus {
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() -> Result<()> {
     let client = reqwest::Client::builder().gzip(true).build()?;
 
     let sources = &get_categories(&client).await?;
-    let small_sources = sources.split_at(3).0;
+    let small_sources = sources.split_at(100).0;
 
-    // let results: Vec<_> = futures::stream::iter(sources)
-    //     .then(|s| async { process_category(&client, s.to_string()).await.unwrap() })
-    //     .collect()
-    //     .await;
+    let results: Vec<_> = futures::stream::iter(sources)
+        .then(|s| async { process_category(&client, s.to_string()).await.unwrap() })
+        .collect()
+        .await;
 
-    // let all_parts = results.iter().flatten().collect::<Vec<_>>();
+    let all_parts = results.iter().flatten().cloned().collect::<Vec<_>>();
 
-    let redis_client = redis::Client::open("redis://127.0.0.1:6379/")?;
-    let mut redis_con = redis_client.get_connection()?;
+    //let redis_client = redis::Client::open("redis://127.0.0.1:6379/")?;
+    //let mut redis_con = redis_client.get_connection()?;
 
-    configure_redis(&mut redis_con);
+    // configure_redis(&mut redis_con);
 
     // all_parts
     //     .iter()
@@ -57,7 +65,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     // println!("{}", search_redis(&mut redis_con, "0603".to_string()).len());
 
-    webserver(redis_con).await;
+    //println!("About to start server...");
+    webserver(all_parts).await;
 
     Ok(())
 }

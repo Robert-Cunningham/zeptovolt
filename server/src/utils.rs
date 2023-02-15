@@ -11,7 +11,9 @@ use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
 };
 
-pub async fn cached_get(c: &Client, url: String) -> Result<String, Box<dyn Error>> {
+use anyhow::Result;
+
+pub async fn cached_get(c: &Client, url: String) -> Result<String> {
     let parsed_url = Url::parse(&url).expect("malformed url");
     let cache_path_str = vec!["cache", &parsed_url.path().replace("/", "-")].join("/");
     let cache_path = PathBuf::from(cache_path_str);
