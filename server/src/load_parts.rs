@@ -1,17 +1,15 @@
 use anyhow::Result;
-use std::error::Error;
-
 use reqwest::Client;
 use serde_json::Value;
 
 use crate::{utils::cached_get, Part};
 
-pub async fn process_category(c: &Client, s: String) -> Result<Vec<Part>> {
+pub async fn process_category(s: String) -> Result<Vec<Part>> {
     let stock_info = serde_json::from_str(
-        &cached_get(
-            &c,
-            format!("https://yaqwsx.github.io/jlcparts/data/{}.stock.json", s),
-        )
+        &cached_get(format!(
+            "https://yaqwsx.github.io/jlcparts/data/{}.stock.json",
+            s
+        ))
         .await?,
     )?;
 
@@ -21,10 +19,10 @@ pub async fn process_category(c: &Client, s: String) -> Result<Vec<Part>> {
     };
 
     let part_info: Value = serde_json::from_str(
-        &cached_get(
-            &c,
-            format!("https://yaqwsx.github.io/jlcparts/data/{}.json.gz", s),
-        )
+        &cached_get(format!(
+            "https://yaqwsx.github.io/jlcparts/data/{}.json.gz",
+            s
+        ))
         .await?,
     )?;
 
@@ -69,11 +67,10 @@ pub async fn process_category(c: &Client, s: String) -> Result<Vec<Part>> {
 }
 */
 
-pub async fn get_categories(c: &Client) -> Result<Vec<String>> {
-    let out = cached_get(
-        c,
-        String::from("https://yaqwsx.github.io/jlcparts/data/index.json"),
-    )
+pub async fn get_categories() -> Result<Vec<String>> {
+    let out = cached_get(String::from(
+        "https://yaqwsx.github.io/jlcparts/data/index.json",
+    ))
     .await?;
 
     let v: Value = serde_json::from_str(&out)?;

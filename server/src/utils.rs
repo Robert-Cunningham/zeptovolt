@@ -13,14 +13,15 @@ use tokio::{
 
 use anyhow::Result;
 
-pub async fn cached_get(c: &Client, url: String) -> Result<String> {
+pub async fn cached_get(url: String) -> Result<String> {
     let parsed_url = Url::parse(&url).expect("malformed url");
     let cache_path_str = vec!["cache", &parsed_url.path().replace("/", "-")].join("/");
     let cache_path = PathBuf::from(cache_path_str);
-    println!("{:?}", cache_path);
+    // println!("{:?}", cache_path);
     match File::open(cache_path.clone()).await {
         Err(_) => {
-            let body = c.get(parsed_url).send().await?;
+            let client = reqwest::Client::builder().gzip(true).build()?;
+            let body = client.get(parsed_url).send().await?;
             let mut write_file = File::create(cache_path).await?;
 
             if url.contains(".json.gz") {

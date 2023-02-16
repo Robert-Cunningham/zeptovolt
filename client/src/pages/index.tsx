@@ -31,18 +31,20 @@ const formatPrice = (price: number) => {
   return out
 }
 
-function ResistorRow({ image_url, description, manufacturer_id, price, stock, basic_or_extended }: Part) {
+function ResistorRow({ image_url, description, manufacturer_id, price, stock, basic_or_extended, datasheet_url }: Part) {
   const search_strings = useContext(SearchContext).split(" ")
 
   return (
     <div className="flex items-center bg-white border shadow-xs p-4 gap-4">
       <div className="">
-        <p className="text-gray-600 font-semibold">
-          <Highlighter searchWords={search_strings} textToHighlight={manufacturer_id}> </Highlighter>
-        </p>
+        <a href={datasheet_url}>
+          <p className="text-gray-600 font-semibold">
+            <Highlighter searchWords={search_strings} textToHighlight={manufacturer_id}> </Highlighter>
+          </p>
+        </a>
       </div>
-      <div className="pr-2">
-        <img src={`https://assets.lcsc.com/images/lcsc/224x224/${image_url}`} className="w-32 object-contain" ></img>
+      <div className="pr-2 w-16 h-16">
+        <img src={`https://assets.lcsc.com/images/lcsc/96x96/${image_url}`} className="" ></img>
       </div>
       <div className="">
         <p className="text-gray-600">
@@ -68,16 +70,16 @@ const CentralColumn = () => {
   const [text, setText] = useState<string>("")
   const [results, setResults] = useState<Part[]>([]);
 
-  // const debouncedText = useDebounce(text, 100);
+  const dbText = useDebounce(text, 150);
 
-  const { response, controller } = useCancelableSWR(`${API_ENDPOINT}/search?q=${text}`)
+  const { response, controller } = useCancelableSWR(`${API_ENDPOINT}/search?q=${dbText}`)
   const { data, isLoading, error } = response;
 
   useEffect(() => {
     if (data && !isLoading && !error) {
       setResults(data)
     }
-  }, [text, data])
+  }, [data])
 
   const cancelLastAndSetText = (newText: string) => {
     controller.abort()
@@ -88,7 +90,7 @@ const CentralColumn = () => {
     <SearchContext.Provider value={text}>
       <SearchBox {...{ text, setText: cancelLastAndSetText }}></SearchBox>
       {results.map((part: Part) => (
-        <ResistorRow key={part.manufacturer_id} {...part}></ResistorRow>
+        <ResistorRow key={part.manufacturer_id + part.description + part.price} {...part}></ResistorRow>
       ))}
     </SearchContext.Provider>
   </div>
@@ -105,6 +107,7 @@ interface Part {
   lscs_id: string,
   manufacturer_id: string,
   image_url: string,
+  datasheet_url: string,
   basic_or_extended: string,
   price: number,
   stock: number

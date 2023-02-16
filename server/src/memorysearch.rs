@@ -73,6 +73,8 @@ pub fn search_parts_indexed<'a>(db: &'a mut PartsDb, string: &String) -> Vec<&'a
         .map(|w| HashSet::from_iter(get_match_indexes(db, w.to_string()).iter().cloned()))
         .collect();
 
+    println!("is {:?}", indexes_set.len());
+
     // let indexes_set = indexes
     //     .iter()
     //     .map(|v| HashSet::from_iter(v.iter().cloned()))
@@ -81,11 +83,15 @@ pub fn search_parts_indexed<'a>(db: &'a mut PartsDb, string: &String) -> Vec<&'a
     let mut indexes_iter = indexes_set.into_iter();
     let first = indexes_iter.next().unwrap_or_default();
 
+    println!("first {:?}", first.len());
+
     let out = indexes_iter.fold(first, |set1: HashSet<usize>, set2: HashSet<usize>| {
         set1.intersection(&set2)
             .cloned()
             .collect::<HashSet<usize, _>>()
     });
+
+    println!("out {:?}", out.len());
 
     let mut parts = out
         .iter()
@@ -93,6 +99,8 @@ pub fn search_parts_indexed<'a>(db: &'a mut PartsDb, string: &String) -> Vec<&'a
         .collect::<Vec<_>>();
 
     sort_parts(&mut parts);
+
+    println!("parts {:?}", parts.len());
 
     return parts;
 }
@@ -107,8 +115,8 @@ fn get_match_indexes(db: &mut PartsDb, word: String) -> &Vec<usize> {
         let does_match = |p: &Part| {
             r.is_match(&p.description)
                 || r.is_match(&p.manufacturer_id)
-                || r.is_match(&p.lcsc_id)
-                || r.is_match(&p.basic_or_extended)
+            // || r.is_match(&p.lcsc_id)
+            || r.is_match(&p.basic_or_extended)
         };
 
         let indexes = db

@@ -43,17 +43,28 @@ enum JLPCBStatus {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let client = reqwest::Client::builder().gzip(true).build()?;
-
-    let sources = &get_categories(&client).await?;
+    let sources = &get_categories().await?;
     let small_sources = sources.split_at(100).0;
 
-    let results: Vec<_> = futures::stream::iter(sources)
-        .then(|s| async { process_category(&client, s.to_string()).await.unwrap() })
-        .collect()
-        .await;
+    println!("Loading parts...");
+    let results: Vec<_> = futures::stream::iter(
+        sources
+            .into_iter()
+            .map(|s| tokio::spawn(process_category(s.to_string()))),
+    )
+    .buffer_unordered(12)
+    .map(|r| r.unwrap())
+    .collect()
+    .await;
 
-    let all_parts = results.iter().flatten().cloned().collect::<Vec<_>>();
+    println!("Done.");
+
+    let all_parts = results
+        .iter()
+        .flatten()
+        .flatten()
+        .cloned()
+        .collect::<Vec<_>>();
 
     let mut db = PartsDb {
         all_parts,
@@ -73,7 +84,7 @@ async fn main() -> Result<()> {
     // println!("{}", search_redis(&mut redis_con, "0603".to_string()).len());
 
     //println!("About to start server...");
-    warm_cache(&mut db);
+    // warm_cache(&mut db);
     webserver(db).await;
 
     Ok(())

@@ -39,6 +39,7 @@ pub async fn webserver<'a>(db: PartsDb) {
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 8090));
 
+    println!("Serving...");
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await
