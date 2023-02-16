@@ -31,6 +31,7 @@ impl PartsDb {
     }
 }
 
+/*
 pub fn search_parts_direct<'a>(db: &'a PartsDb, string: &String) -> Vec<&'a Part> {
     let words = string.split_ascii_whitespace();
     let regexes: Vec<_> = words
@@ -56,15 +57,18 @@ pub fn search_parts_direct<'a>(db: &'a PartsDb, string: &String) -> Vec<&'a Part
 
     return out;
 }
+*/
 
 pub fn sort_parts(parts: &mut Vec<&Part>) {
+    println!("first element {:?}", parts.first());
     parts.sort_unstable_by_key(|x| {
         if x.basic_or_extended == "Basic" {
-            i32::MIN
+            -1 * (x.stock as i32)
         } else {
-            -1 * x.stock as i32
+            i32::MAX - x.stock as i32
         }
     });
+    println!("first element after sort {:?}", parts.first());
 }
 
 pub fn search_parts_indexed<'a>(db: &'a mut PartsDb, string: &String) -> Vec<&'a Part> {
@@ -98,7 +102,9 @@ pub fn search_parts_indexed<'a>(db: &'a mut PartsDb, string: &String) -> Vec<&'a
         .map(|i| db.all_parts.get(*i).unwrap())
         .collect::<Vec<_>>();
 
+    println!("bs first element {:?}", parts.first());
     sort_parts(&mut parts);
+    println!("as first element {:?}", parts.first());
 
     println!("parts {:?}", parts.len());
 
