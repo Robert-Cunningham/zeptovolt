@@ -62,27 +62,31 @@ function ResistorRow({ image_url, description, manufacturer_id, price, stock, ba
   );
 }
 
+const API_ENDPOINT = process.env.NODE_ENV === "development" ? "http://localhost:8090" : "https://api.zeptovolt.com"
 
 const CentralColumn = () => {
   const [text, setText] = useState<string>("")
   const [results, setResults] = useState<Part[]>([]);
 
-  const debouncedText = useDebounce(text, 100);
+  // const debouncedText = useDebounce(text, 100);
 
-  const { data, isLoading, error } = useSWR(`http://localhost:8090/search?q=${debouncedText}`, fetcher)
+  const { response, controller } = useCancelableSWR(`${API_ENDPOINT}/search?q=${text}`)
+  const { data, isLoading, error } = response;
 
   useEffect(() => {
     if (data && !isLoading && !error) {
       setResults(data)
     }
+  }, [text, data])
 
-  }, [debouncedText, data])
-
-  // console.log(data, isLoading, error)
+  const cancelLastAndSetText = (newText: string) => {
+    controller.abort()
+    setText(newText)
+  }
 
   return <div className="md:max-w-4xl mx-auto">
     <SearchContext.Provider value={text}>
-      <SearchBox {...{ text, setText }}></SearchBox>
+      <SearchBox {...{ text, setText: cancelLastAndSetText }}></SearchBox>
       {results.map((part: Part) => (
         <ResistorRow key={part.manufacturer_id} {...part}></ResistorRow>
       ))}
@@ -91,9 +95,6 @@ const CentralColumn = () => {
 }
 
 // <input type="search" id="default-search" className="block w-full p-4 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Search Mockups, Logos..." required
-
-// @ts-ignore
-const fetcher = (...args) => fetch(...args).then(x => x.json())
 
 const SearchBox = ({ text, setText }: { text: string, setText: (a0: string) => void }) => {
   return <input value={text} onChange={e => setText(e.target.value)} className="w-full h-8 rounded-lg text-sm p-5 border" placeholder="10k 0603 resistor"></input>
@@ -132,4 +133,14 @@ function useDebounce<T>(value: T, delay: number): T {
     [value, delay] // Only re-call effect if value or delay changes
   );
   return debouncedValue;
+}
+
+
+// @ts-ignore
+const fetcher = (...args) => fetch(...args).then(x => x.json())
+
+//@ts-ignore
+function useCancelableSWR(key) {
+  const controller = new AbortController()
+  return { response: useSWR(key, (url: string) => fetch(url, { signal: controller.signal }).then(x => x.json())), controller }
 }
