@@ -2,8 +2,12 @@ import Head from 'next/head'
 import Image from 'next/image'
 import { Inter } from '@next/font/google'
 import styles from '@/styles/Home.module.css'
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import useSWR from 'swr'
+import React from 'react'
+import Highlighter from 'react-highlight-words'
+
+const SearchContext = React.createContext("");
 
 const Home = () => {
   return (
@@ -28,16 +32,22 @@ const formatPrice = (price: number) => {
 }
 
 function ResistorRow({ image_url, description, manufacturer_id, price, stock, basic_or_extended }: Part) {
+  const search_strings = useContext(SearchContext).split(" ")
+
   return (
     <div className="flex items-center bg-white border shadow-xs p-4 gap-4">
       <div className="">
-        <p className="text-gray-600 font-semibold">{manufacturer_id}</p>
+        <p className="text-gray-600 font-semibold">
+          <Highlighter searchWords={search_strings} textToHighlight={manufacturer_id}> </Highlighter>
+        </p>
       </div>
       <div className="pr-2">
         <img src={`https://assets.lcsc.com/images/lcsc/224x224/${image_url}`} className="w-32 object-contain" ></img>
       </div>
       <div className="">
-        <p className="text-gray-600">{description}</p>
+        <p className="text-gray-600">
+          <Highlighter searchWords={search_strings} textToHighlight={description}> </Highlighter>
+        </p>
       </div>
       <div className="">
         <p className="text-gray-600">{basic_or_extended.at(0)?.toUpperCase()}</p>
@@ -71,10 +81,12 @@ const CentralColumn = () => {
   // console.log(data, isLoading, error)
 
   return <div className="md:max-w-4xl mx-auto">
-    <SearchBox {...{ text, setText }}></SearchBox>
-    {results.map((part: Part) => (
-      <ResistorRow {...part}></ResistorRow>
-    ))}
+    <SearchContext.Provider value={text}>
+      <SearchBox {...{ text, setText }}></SearchBox>
+      {results.map((part: Part) => (
+        <ResistorRow key={part.manufacturer_id} {...part}></ResistorRow>
+      ))}
+    </SearchContext.Provider>
   </div>
 }
 

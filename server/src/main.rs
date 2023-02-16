@@ -1,17 +1,19 @@
 #![feature(async_closure)]
 
 mod load_parts;
+mod memorysearch;
 mod server;
 mod textsearch;
 mod utils;
 
 use futures::StreamExt;
 use indicatif::ProgressIterator;
+use memorysearch::{warm_cache, PartsDb};
 use par_stream::ParStreamExt;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
-use std::error::Error;
+use std::{collections::HashMap, error::Error};
 
 use crate::{
     load_parts::{get_categories, process_category},
@@ -53,6 +55,11 @@ async fn main() -> Result<()> {
 
     let all_parts = results.iter().flatten().cloned().collect::<Vec<_>>();
 
+    let mut db = PartsDb {
+        all_parts,
+        cache: HashMap::new(),
+    };
+
     //let redis_client = redis::Client::open("redis://127.0.0.1:6379/")?;
     //let mut redis_con = redis_client.get_connection()?;
 
@@ -66,7 +73,8 @@ async fn main() -> Result<()> {
     // println!("{}", search_redis(&mut redis_con, "0603".to_string()).len());
 
     //println!("About to start server...");
-    webserver(all_parts).await;
+    warm_cache(&mut db);
+    webserver(db).await;
 
     Ok(())
 }

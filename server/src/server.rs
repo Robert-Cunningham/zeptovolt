@@ -2,6 +2,7 @@ use std::{
     collections::HashMap,
     net::SocketAddr,
     sync::{Arc, Mutex},
+    time::Instant,
 };
 
 use axum::{
@@ -14,15 +15,19 @@ use regex::Regex;
 use tower::ServiceBuilder;
 use tower_http::cors::{Any, CorsLayer};
 
-use crate::{textsearch::search_redis, Part};
+use crate::{
+    memorysearch::{search_parts_indexed, PartsDb},
+    textsearch::search_redis,
+    Part,
+};
 
 #[derive(Clone)]
 struct WebServerState {
     //con: Arc<Mutex<redis::Connection>>,
-    db: Arc<Mutex<Vec<Part>>>,
+    db: Arc<Mutex<PartsDb>>,
 }
 
-pub async fn webserver<'a>(/*con: redis::Connection,*/ db: Vec<Part>) {
+pub async fn webserver<'a>(db: PartsDb) {
     let app = Router::new()
         .route("/status", get(status))
         .route("/search", get(search))
@@ -51,41 +56,11 @@ async fn search(
     let q = params.get("q").unwrap().to_string();
     // let mut c = wss.con.lock().unwrap();
     // let out = search_redis(&mut c, q);
-    let all_parts = wss.db.lock().unwrap();
-    let results = search_parts(&all_parts, q);
+    let mut all_parts = wss.db.lock().unwrap();
+    let start = Instant::now();
+    let results = search_parts_indexed(&mut all_parts, &q);
+    println!("Searched for {} in {:?}.", q, start.elapsed());
     let prep = results.into_iter().take(100).cloned().collect::<Vec<_>>();
 
     return Json(prep);
-}
-
-fn search_parts(db: &Vec<Part>, string: String) -> Vec<&Part> {
-    let words = string.split_ascii_whitespace();
-    let regexes: Vec<_> = words
-        .map(|w| {
-            let regex_pattern = format!("(?i){}", w);
-            println!("{}", regex_pattern);
-            let r = Regex::new(&regex_pattern).unwrap();
-            return r;
-        })
-        .collect();
-
-    let does_match = |p: &Part| {
-        regexes.par_iter().all(|r| {
-            r.is_match(&p.description)
-                || r.is_match(&p.manufacturer_id)
-                || r.is_match(&p.lcsc_id)
-                || r.is_match(&p.basic_or_extended)
-        })
-    };
-
-    let mut out = db.iter().filter(|p| does_match(p)).collect::<Vec<_>>();
-
-    out.sort_unstable_by_key(|x| {
-        -1 * (if x.basic_or_extended == "Basic" {
-            i32::MAX
-        } else {
-            x.stock as i32
-        })
-    });
-    return out;
 }

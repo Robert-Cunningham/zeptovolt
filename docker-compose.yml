@@ -1,0 +1,45 @@
+version: '3'
+services:
+  server:
+    build: ./server
+    expose:
+      - 8080
+    environment:
+        VIRTUAL_HOST: api.zeptovolt.com
+    volumes:
+        - ./cache:/cache
+
+  client:
+    build: ./client
+    expose:
+      - 3000
+    environment:
+        VIRTUAL_HOST: zeptovolt.com,www.zeptovolt.com
+        LETSENCRYPT_HOST: api.zeptovolt.com,zeptovolt.com,www.zeptovolt.com
+        LETSENCRYPT_EMAIL: infinitydeltax@gmail.com
+
+  nginx-proxy:
+      image: nginxproxy/nginx-proxy
+      restart: always
+      ports:
+          - '80:80'
+          - '443:443'
+      volumes:
+          - /etc/nginx/certs:/etc/nginx/certs
+          - /etc/nginx/vhost.d:/etc/nginx/vhost.d
+          - /usr/share/nginx/html:/usr/share/nginx/html
+          - /var/run/docker.sock:/tmp/docker.sock:ro
+      labels:
+          - 'com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy'
+      environment:
+          HSTS: 'off'
+  nginx-proxy-ssl:
+      image: nginxproxy/acme-companion
+      volumes:
+          - /etc/acme.sh:/etc/acme.sh
+          - /var/run/docker.sock:/var/run/docker.sock:ro
+      volumes_from:
+          - nginx-proxy
+      environment:
+          #ACME_CA_URI: 'https://acme-staging-v02.api.letsencrypt.org/directory'
+          NGINX_PROXY_CONTAINER: 'nginx-proxy'
