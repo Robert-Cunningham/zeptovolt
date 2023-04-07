@@ -113,14 +113,16 @@ pub fn search_parts_indexed<'a>(db: &'a mut PartsDb, string: &String) -> Vec<&'a
 
 fn get_match_indexes(db: &mut PartsDb, word: String) -> &Vec<usize> {
     assert!(word.len() >= 2);
-    let r = Regex::new(&format!("(?i){}", word)); // .unwrap();
 
-    if let Err(e) = r {
-        // search string is an unformatted regex
-        return &vec![];
-    }
+    let r = match Regex::new(&format!("(?i){}", word)) {
+        Ok(r) => r,
+        Err(e) => {
+            let escaped = regex::escape(&word);
+            Regex::new(&escaped).expect("Escaped regex failed to unwrap?")
+        }
+    };
 
-    let r = r.unwrap();
+    // let r = Regex::new(&format!("(?i){}", word)); // .unwrap();
 
     let cached = db.cache.entry(word);
 
