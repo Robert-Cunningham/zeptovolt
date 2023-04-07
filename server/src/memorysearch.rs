@@ -113,7 +113,14 @@ pub fn search_parts_indexed<'a>(db: &'a mut PartsDb, string: &String) -> Vec<&'a
 
 fn get_match_indexes(db: &mut PartsDb, word: String) -> &Vec<usize> {
     assert!(word.len() >= 2);
-    let r = Regex::new(&format!("(?i){}", word)).unwrap();
+    let r = Regex::new(&format!("(?i){}", word)); // .unwrap();
+
+    if let Err(e) = r {
+        // search string is an unformatted regex
+        return &vec![];
+    }
+
+    let r = r.unwrap();
 
     let cached = db.cache.entry(word);
 
@@ -183,3 +190,15 @@ pub fn warm_cache(db: &mut PartsDb) {
             get_match_indexes(db, w.to_string());
         });
 }
+
+/*
+pcb-search-server-1           | thread 'tokio-runtime-worker' panicked at 'called `Result::unwrap()` on an `Err` value: Syntax(
+    pcb-search-server-1           | ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    pcb-search-server-1           | regex parse error:
+    pcb-search-server-1           |     (?i)ESP32-C3-MINI-1-H4(4MB
+    pcb-search-server-1           |                           ^
+    pcb-search-server-1           | error: unclosed group
+    pcb-search-server-1           | ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    pcb-search-server-1           | )', src/memorysearch.rs:110:50
+    pcb-search-server-1           | note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
+*/
