@@ -13,10 +13,27 @@ use axum::{
 use indicatif::ProgressIterator;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 use tower::ServiceBuilder;
 use tower_http::cors::{Any, CorsLayer};
 
-use crate::{textsearch::search_redis, Part};
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Part {
+    pub lcsc_id: String,
+    pub manufacturer_id: String,
+    pub description: String,
+    pub price: f32,
+    pub image_url: Option<String>,
+    pub datasheet_url: String,
+    pub basic_or_extended: String, // todo
+    pub stock: u32,
+}
+
+enum JLPCBStatus {
+    Basic,
+    Extended,
+    Neither,
+}
 
 #[derive(Clone, Debug)]
 pub struct PartsDb {
@@ -34,34 +51,6 @@ impl PartsDb {
         }
     }
 }
-
-/*
-pub fn search_parts_direct<'a>(db: &'a PartsDb, string: &String) -> Vec<&'a Part> {
-    let words = string.split_ascii_whitespace();
-    let regexes: Vec<_> = words
-        .map(|w| Regex::new(&format!("(?i){}", w)).unwrap())
-        .collect();
-
-    let does_match = |p: &Part| {
-        regexes.iter().all(|r| {
-            r.is_match(&p.description)
-                || r.is_match(&p.manufacturer_id)
-                || r.is_match(&p.lcsc_id)
-                || r.is_match(&p.basic_or_extended)
-        })
-    };
-
-    let mut out = db
-        .all_parts
-        .par_iter()
-        .filter(|p| does_match(p))
-        .collect::<Vec<_>>();
-
-    sort_parts(&mut out);
-
-    return out;
-}
-*/
 
 pub fn sort_parts(parts: &mut Vec<&Part>) {
     println!("first element {:?}", parts.first());
@@ -82,11 +71,6 @@ pub fn search_parts_indexed<'a>(db: &'a mut PartsDb, string: &String) -> Vec<&'a
         .collect();
 
     println!("is {:?}", indexes_set.len());
-
-    // let indexes_set = indexes
-    //     .iter()
-    //     .map(|v| HashSet::from_iter(v.iter().cloned()))
-    //     .collect::<Vec<_>>();
 
     let mut indexes_iter = indexes_set.into_iter();
     let first = indexes_iter.next().unwrap_or_default();
@@ -132,8 +116,7 @@ fn get_match_indexes(db: &mut PartsDb, word: String) -> &Vec<usize> {
         let does_match = |p: &Part| {
             r.is_match(&p.description)
                 || r.is_match(&p.manufacturer_id)
-            // || r.is_match(&p.lcsc_id)
-            || r.is_match(&p.basic_or_extended)
+                || r.is_match(&p.basic_or_extended)
         };
 
         let indexes = db
@@ -194,15 +177,3 @@ pub fn warm_cache(db: &mut PartsDb) {
             get_match_indexes(db, w.to_string());
         });
 }
-
-/*
-pcb-search-server-1           | thread 'tokio-runtime-worker' panicked at 'called `Result::unwrap()` on an `Err` value: Syntax(
-    pcb-search-server-1           | ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    pcb-search-server-1           | regex parse error:
-    pcb-search-server-1           |     (?i)ESP32-C3-MINI-1-H4(4MB
-    pcb-search-server-1           |                           ^
-    pcb-search-server-1           | error: unclosed group
-    pcb-search-server-1           | ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    pcb-search-server-1           | )', src/memorysearch.rs:110:50
-    pcb-search-server-1           | note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
-*/

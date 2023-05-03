@@ -1,8 +1,13 @@
+use std::{collections::HashMap, time::Instant};
+
 use anyhow::Result;
-use reqwest::Client;
+use futures::StreamExt;
 use serde_json::Value;
 
-use crate::{utils::cached_get, Part};
+use crate::{
+    search::{Part, PartsDb},
+    utils::cached_get,
+};
 
 pub async fn process_category(s: String) -> Result<Vec<Part>> {
     let stock_info = serde_json::from_str(
@@ -95,4 +100,49 @@ pub async fn get_categories() -> Result<Vec<String>> {
     };
 
     Ok(sources)
+}
+
+pub async fn download_db() -> Result<PartsDb, anyhow::Error> {
+    let sources = &get_categories().await?;
+    // let small_sources = sources.split_at(100).0;
+
+    /*
+    println!("Loading parts...");
+    let results = sources
+        .iter()
+        .map(|s| process_category(s.to_string()).await.unwrap())
+        .collect::<Vec<_>>();
+    */
+
+    /*
+        let results: Vec<_> = futures::stream::iter(
+            sources
+                .into_iter()
+                .map(|s| tokio::spawn(process_category(s.to_string()))),
+        )
+        .buffer_unordered(12)
+        .map(|r| r.unwrap())
+        .collect()
+        .await;
+    */
+
+    let results =
+        futures::future::join_all(sources.iter().map(|s| process_category(s.to_string()))).await;
+
+    println!("Done.");
+
+    let all_parts = results
+        .iter()
+        .flatten()
+        .flatten()
+        .cloned()
+        .collect::<Vec<_>>();
+
+    let db = PartsDb {
+        all_parts: all_parts,
+        cache: HashMap::new(),
+        last_update: Instant::now(),
+    };
+
+    return Ok(db);
 }
