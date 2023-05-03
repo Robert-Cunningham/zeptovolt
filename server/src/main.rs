@@ -13,7 +13,7 @@ use par_stream::ParStreamExt;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 
-use std::{collections::HashMap, error::Error};
+use std::{collections::HashMap, error::Error, time::Instant};
 
 use crate::{
     load_parts::{get_categories, process_category},
@@ -41,10 +41,9 @@ enum JLPCBStatus {
     Neither,
 }
 
-#[tokio::main]
-async fn main() -> Result<()> {
+async fn download_db() -> Result<PartsDb, anyhow::Error> {
     let sources = &get_categories().await?;
-    let small_sources = sources.split_at(100).0;
+    // let small_sources = sources.split_at(100).0;
 
     println!("Loading parts...");
     let results: Vec<_> = futures::stream::iter(
@@ -66,25 +65,18 @@ async fn main() -> Result<()> {
         .cloned()
         .collect::<Vec<_>>();
 
-    let mut db = PartsDb {
+    let db = PartsDb {
         all_parts,
         cache: HashMap::new(),
+        last_update: Instant::now(),
     };
 
-    //let redis_client = redis::Client::open("redis://127.0.0.1:6379/")?;
-    //let mut redis_con = redis_client.get_connection()?;
+    return Ok(db);
+}
 
-    // configure_redis(&mut redis_con);
-
-    // all_parts
-    //     .iter()
-    //     .progress()
-    //     .for_each(|p| load_into_redis(&mut redis_con, p));
-
-    // println!("{}", search_redis(&mut redis_con, "0603".to_string()).len());
-
-    //println!("About to start server...");
-    // warm_cache(&mut db);
+#[tokio::main]
+async fn main() -> Result<()> {
+    let db = download_db().await?;
     webserver(db).await;
 
     Ok(())

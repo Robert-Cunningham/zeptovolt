@@ -2,6 +2,7 @@ use std::{
     collections::{HashMap, HashSet},
     net::SocketAddr,
     sync::{Arc, Mutex},
+    time::Instant,
 };
 
 use axum::{
@@ -17,9 +18,11 @@ use tower_http::cors::{Any, CorsLayer};
 
 use crate::{textsearch::search_redis, Part};
 
+#[derive(Clone, Debug)]
 pub struct PartsDb {
     pub all_parts: Vec<Part>,
     pub cache: HashMap<String, Vec<usize>>,
+    pub last_update: Instant,
 }
 
 impl PartsDb {
@@ -27,6 +30,7 @@ impl PartsDb {
         PartsDb {
             all_parts: Vec::new(),
             cache: HashMap::new(),
+            last_update: Instant::now(),
         }
     }
 }
@@ -121,8 +125,6 @@ fn get_match_indexes(db: &mut PartsDb, word: String) -> &Vec<usize> {
             Regex::new(&escaped).expect("Escaped regex failed to unwrap?")
         }
     };
-
-    // let r = Regex::new(&format!("(?i){}", word)); // .unwrap();
 
     let cached = db.cache.entry(word);
 

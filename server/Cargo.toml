@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.69"
 axum = "0.6.6"
+axum-macros = "0.3.7"
 bytes = { version = "1.4.0", features=["std"]}
 enum-as-inner = "0.5.1"
 flate2 = "1.0.25"
