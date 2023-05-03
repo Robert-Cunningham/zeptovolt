@@ -31,7 +31,7 @@ async fn status() -> &'static str {
     return "Ok";
 }
 
-const MAX_STALENESS_SECS: u64 = 60 * 60 * 24 * 3;
+const MAX_STALENESS_SECS: u64 = 60;
 
 #[axum_macros::debug_handler]
 async fn search(
@@ -72,17 +72,12 @@ pub async fn webserver(db: PartsDb) {
 }
 
 async fn refresh_db_periodically(db: Arc<tokio::sync::Mutex<PartsDb>>) {
-    // let refresh_interval = Duration::from_secs(MAX_STALENESS_SECS);
+    let refresh_interval = Duration::from_secs(MAX_STALENESS_SECS);
     loop {
-        // tokio::time::sleep(refresh_interval).await;
-        // let new_db_result = download_db().await;
-        // let new_db_result = db.lock().await;
-        let new_db_result = download_db().await.unwrap();
-        let mut db_write_lock = db.lock().await;
-        *db_write_lock = new_db_result.clone();
-        println!("Database updated successfully.");
+        tokio::time::sleep(refresh_interval).await;
+        println!("Database stale, updating database...");
+        let new_db_result = download_db().await;
 
-        /*
         match new_db_result {
             Ok(new_db) => {
                 let mut db_write_lock = db.lock().await;
@@ -93,6 +88,5 @@ async fn refresh_db_periodically(db: Arc<tokio::sync::Mutex<PartsDb>>) {
                 eprintln!("Failed to update database: {:?}", e);
             }
         }
-        */
     }
 }

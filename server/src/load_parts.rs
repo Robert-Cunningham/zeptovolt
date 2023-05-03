@@ -51,7 +51,7 @@ pub async fn process_category(s: String) -> Result<Vec<Part>> {
                 .into(),
             stock: stock_map
                 .get(p[0].as_str().expect("part number wasn't a string?"))
-                .expect("stock json didnt have info on part")
+                .expect(format!("stock json didnt have info on part {}", p[0]).as_str())
                 .as_i64()
                 .unwrap() as u32,
         })

@@ -1,4 +1,8 @@
-use std::path::PathBuf;
+use std::{
+    fs,
+    path::PathBuf,
+    time::{Instant, SystemTime, UNIX_EPOCH},
+};
 
 use bytes::Buf;
 use flate2::read::GzDecoder;
@@ -14,9 +18,14 @@ use tokio::{
 use anyhow::Result;
 
 pub async fn cached_get(url: String) -> Result<String> {
+    let day = SystemTime::now().duration_since(UNIX_EPOCH)?.as_secs() / 86400;
+    let day_str = format!("{}", day);
+
     let parsed_url = Url::parse(&url).expect("malformed url");
-    let cache_path_str = vec!["cache", &parsed_url.path().replace("/", "-")].join("/");
+    let cache_path_str = vec!["cache", &day_str, &parsed_url.path().replace("/", "-")].join("/");
     let cache_path = PathBuf::from(cache_path_str);
+    fs::create_dir_all(cache_path.parent().unwrap())?;
+
     // println!("{:?}", cache_path);
     match File::open(cache_path.clone()).await {
         Err(_) => {
