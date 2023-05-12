@@ -6,6 +6,8 @@ import { useContext, useEffect, useState } from 'react'
 import useSWR from 'swr'
 import React from 'react'
 import Highlighter from 'react-highlight-words'
+import { Tooltip } from 'react-tooltip'
+import { renderToHTML } from 'next/dist/server/render'
 
 const SearchContext = React.createContext("");
 
@@ -19,49 +21,107 @@ const Home = () => {
   )
 }
 
-const formatPrice = (price: number) => {
-  let level = 1;
-  let out = 0;
+/*
+Can you write me a typescript function which converts a float to a string of US dollars? For example, the price 3.34234 should be displayed as $3.34. Any prices less than a cent should be displayed to one significant digit. For example, 0.000000234 should be displayed as $0.0000002.
+*/
 
-  while (out === 0 && level <= 5) {
-    level += 1
-    out = Math.round(price * Math.pow(10, level)) / Math.pow(10, level)
+function formatUSDPrice(value: number): string {
+  const options: Intl.NumberFormatOptions = {
+    style: 'currency',
+    currency: 'USD',
+  };
+
+  // Check if the value is less than a cent
+  if (value < 0.01) {
+    // Calculate the number of significant digits after the decimal point
+    const significantDigits = Math.ceil(-Math.log10(value));
+
+    // Set the minimum and maximum fraction digits to the significant digits
+    options.minimumFractionDigits = significantDigits;
+    options.maximumFractionDigits = significantDigits;
+  } else {
+    // Set the minimum and maximum fraction digits to 2 (for cents)
+    options.minimumFractionDigits = 2;
+    options.maximumFractionDigits = 2;
   }
 
-  return out
+  // Format the value using Intl.NumberFormat
+  const formatter = new Intl.NumberFormat('en-US', options);
+  return formatter.format(value);
 }
+
+function shortenNumber(num: number): string | number {
+  if (typeof num !== "number" || isNaN(num)) {
+    return num;
+  }
+
+  let suffix = "";
+  let divisor = 1;
+
+  if (num >= 1_000_000) {
+    suffix = "M";
+    divisor = 1_000_000;
+  } else if (num >= 1_000) {
+    suffix = "k";
+    divisor = 1_000;
+  }
+
+  const shortNum = Math.round(num / divisor);
+  return shortNum.toString() + suffix;
+}
+
+// Example usage:
+// console.log(shortenNumber(4711));     // "4k"
+// console.log(shortenNumber(5125829));   // "5M"
+// console.log(shortenNumber(NaN));       // NaN
+
 
 function ResistorRow({ image_url, description, manufacturer_id, price, stock, basic_or_extended, datasheet_url }: Part) {
   const search_strings = useContext(SearchContext).split(" ")
 
   return (
-    <div className="flex items-center bg-white border shadow-xs p-4 gap-4">
-      <div className="">
+    <tr className="bg-white border py-2">
+      <td className="px-2">
         <a href={datasheet_url}>
-          <p className="text-gray-600 font-semibold">
+          <p className="text-gray-600">
             <Highlighter searchWords={search_strings} textToHighlight={manufacturer_id}> </Highlighter>
           </p>
         </a>
-      </div>
-      <div className="pr-2 w-16 h-16">
-        <img src={`https://assets.lcsc.com/images/lcsc/96x96/${image_url}`} className="" ></img>
-      </div>
-      <div className="">
+      </td>
+      <td className="px-2 w-16 h-16">
+        <a {...ttProps} data-tooltip-id="image" data-image-url={`https://assets.lcsc.com/images/lcsc/224x224/${image_url}`}>
+          <img className="rounded-sm" src={`https://assets.lcsc.com/images/lcsc/96x96/${image_url}`} ></img>
+        </a>
+      </td>
+      <td className="px-2">
         <p className="text-gray-600">
           <Highlighter searchWords={search_strings} textToHighlight={description}> </Highlighter>
         </p>
-      </div>
-      <div className="">
-        <p className="text-gray-600">{basic_or_extended.at(0)?.toUpperCase()}</p>
-      </div>
-      <div className="">
-        <p className="text-gray-600">${formatPrice(price)}</p>
-      </div>
-      <div className="">
-        <p className="text-gray-600">{stock}</p>
-      </div>
-    </div>
+      </td>
+      <td className="px-2">
+        <p className="text-gray-600">
+          <a {...ttProps} data-tooltip-id="bore" data-tooltip-content={basic_or_extended.toLowerCase() + " part type"}>{basic_or_extended.at(0)?.toUpperCase()}</a>
+        </p>
+      </td>
+      <td className="px-2">
+        <p className="text-gray-600">
+          <a {...ttProps} data-tooltip-id="price" data-tooltip-content={'$' + price}>{formatUSDPrice(price)}</a>
+        </p>
+      </td>
+      <td className="px-2">
+        <p className="text-gray-600"><a {...ttProps} data-tooltip-id="stock" data-tooltip-content={stock + " in stock"}>{shortenNumber(stock)}</a></p>
+      </td>
+    </tr>
   );
+}
+
+const ttProps = {
+  "data-tooltip-delay-show": 100,
+  className: "cursor-pointer",
+}
+
+const ttElProps = {
+  style: { backgroundColor: "rgb(0, 0, 0)", opacity: 1 }
 }
 
 const API_ENDPOINT = process.env.NODE_ENV === "development" ? "http://localhost:8090" : "https://api.zeptovolt.com"
@@ -86,12 +146,25 @@ const CentralColumn = () => {
     setText(newText)
   }
 
-  return <div className="md:max-w-4xl mx-auto">
+  return <div className="md:max-w-4xl mx-auto flex flex-col gap-4">
     <SearchContext.Provider value={text}>
       <SearchBox {...{ text, setText: cancelLastAndSetText }}></SearchBox>
-      {results.map((part: Part) => (
-        <ResistorRow key={part.manufacturer_id + part.description + part.price} {...part}></ResistorRow>
-      ))}
+      <Tooltip id="stock" {...ttElProps} />
+      <Tooltip id="price"{...ttElProps} />
+      <Tooltip id="bore"{...ttElProps} />
+      <Tooltip id="image" {...ttElProps} render={({ content, activeAnchor }) => {
+        const url = activeAnchor?.getAttribute("data-image-url");
+        return (
+          <img className="rounded-sm" src={url!}></img>
+        )
+      }} />
+      <table className="table-auto">
+        <tbody>
+          {results.map((part: Part) => (
+            <ResistorRow key={part.manufacturer_id + part.description + part.price} {...part}></ResistorRow>
+          ))}
+        </tbody>
+      </table>
     </SearchContext.Provider>
   </div>
 }

@@ -31,7 +31,7 @@ async fn status() -> &'static str {
     return "Ok";
 }
 
-const MAX_STALENESS_SECS: u64 = 60;
+const MAX_STALENESS_SECS: u64 = 60 * 60 * 24 * 3;
 
 #[axum_macros::debug_handler]
 async fn search(
@@ -61,7 +61,7 @@ pub async fn webserver(db: PartsDb) {
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 8090));
 
-    println!("Serving...");
+    println!("Serving on 8090...");
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await

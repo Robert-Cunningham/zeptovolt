@@ -104,28 +104,6 @@ pub async fn get_categories() -> Result<Vec<String>> {
 
 pub async fn download_db() -> Result<PartsDb, anyhow::Error> {
     let sources = &get_categories().await?;
-    // let small_sources = sources.split_at(100).0;
-
-    /*
-    println!("Loading parts...");
-    let results = sources
-        .iter()
-        .map(|s| process_category(s.to_string()).await.unwrap())
-        .collect::<Vec<_>>();
-    */
-
-    /*
-        let results: Vec<_> = futures::stream::iter(
-            sources
-                .into_iter()
-                .map(|s| tokio::spawn(process_category(s.to_string()))),
-        )
-        .buffer_unordered(12)
-        .map(|r| r.unwrap())
-        .collect()
-        .await;
-    */
-
     let results =
         futures::future::join_all(sources.iter().map(|s| process_category(s.to_string()))).await;
 
