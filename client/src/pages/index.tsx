@@ -13,11 +13,16 @@ const SearchContext = React.createContext("");
 
 const Home = () => {
   return (
-    <main>
-      <div className="py-8 bg-slate-100 h-screen w-screen">
-        <CentralColumn></CentralColumn>
-      </div>
-    </main>
+    <>
+      <Head>
+        <title>Zeptovolt</title>
+      </Head>
+      <main>
+        <div className="py-8 bg-slate-100 h-screen w-screen">
+          <CentralColumn></CentralColumn>
+        </div>
+      </main>
+    </>
   )
 }
 
