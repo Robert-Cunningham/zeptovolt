@@ -18,7 +18,7 @@ const Home = () => {
         <title>Zeptovolt</title>
       </Head>
       <main>
-        <div className="py-8 bg-slate-100 h-screen w-screen">
+        <div className="py-8 bg-slate-100 min-h-screen w-screen">
           <CentralColumn></CentralColumn>
         </div>
       </main>
