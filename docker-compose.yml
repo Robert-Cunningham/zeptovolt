@@ -6,6 +6,7 @@ services:
       - 8090
     environment:
         VIRTUAL_HOST: api.zeptovolt.com
+    restart: on-failure
     volumes:
         - ./cache:/cache
 
