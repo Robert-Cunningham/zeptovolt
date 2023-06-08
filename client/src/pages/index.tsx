@@ -8,6 +8,8 @@ import React from 'react'
 import Highlighter from 'react-highlight-words'
 import { Tooltip } from 'react-tooltip'
 import { renderToHTML } from 'next/dist/server/render'
+import { start } from 'repl'
+import { ErrorBoundary } from 'react-error-boundary'
 
 const SearchContext = React.createContext("");
 
@@ -21,9 +23,27 @@ const Home = () => {
         <div className="py-8 bg-slate-100 min-h-screen w-screen">
           <CentralColumn></CentralColumn>
         </div>
-      </main>
+      </main >
     </>
   )
+}
+
+const ErrorFallback = ({ error }: { error: Error }) => {
+  if (error.message.includes("Invalid regular expression")) {
+    return (
+      <div className="mx-auto">
+        Looks like you have an invalid regular expression in your search query.
+        <pre>{error.message}</pre>
+      </div>
+    )
+  } else {
+    return (
+      <div className="mx-auto">
+        <p>Something went wrong:</p>
+        <pre>{error.message}</pre>
+      </div>
+    )
+  }
 }
 
 /*
@@ -134,6 +154,8 @@ const API_ENDPOINT = process.env.NODE_ENV === "development" ? "http://localhost:
 const CentralColumn = () => {
   const [text, setText] = useState<string>("")
   const [results, setResults] = useState<Part[]>([]);
+  const [startTime, setStartTime] = useState<Record<string, number | undefined>>({})
+  const [endTime, setEndTime] = useState<Record<string, number | undefined>>({})
 
   const dbText = useDebounce(text, 150);
 
@@ -141,35 +163,48 @@ const CentralColumn = () => {
   const { data, isLoading, error } = response;
 
   useEffect(() => {
-    if (data && !isLoading && !error) {
+    if (data && !isLoading && !error && data !== results) {
       setResults(data)
+      if (!endTime[text]) {
+        setEndTime(endTime => ({ ...endTime, [text]: Date.now() }))
+      }
     }
-  }, [data])
+  }, [data, setEndTime, setResults, text])
 
   const cancelLastAndSetText = (newText: string) => {
     controller.abort()
+    setStartTime(startTime => ({ ...startTime, [newText]: Date.now() }))
+    setEndTime(endTime => ({ ...endTime, [text]: undefined }))
     setText(newText)
   }
 
+  const time = endTime[text] && startTime[text] && (endTime[text]! - startTime[text]!)
+
   return <div className="md:max-w-4xl mx-auto flex flex-col gap-4">
     <SearchContext.Provider value={text}>
+      <p className="text-gray-800 font-semibold mx-auto text-md">Fast JLCPCB Parts Search</p>
       <SearchBox {...{ text, setText: cancelLastAndSetText }}></SearchBox>
-      <Tooltip id="stock" {...ttElProps} />
-      <Tooltip id="price"{...ttElProps} />
-      <Tooltip id="bore"{...ttElProps} />
-      <Tooltip id="image" {...ttElProps} render={({ content, activeAnchor }) => {
-        const url = activeAnchor?.getAttribute("data-image-url");
-        return (
-          <img className="rounded-sm" src={url!}></img>
-        )
-      }} />
-      <table className="table-auto">
-        <tbody>
-          {results.map((part: Part) => (
-            <ResistorRow key={part.manufacturer_id + part.description + part.price} {...part}></ResistorRow>
-          ))}
-        </tbody>
-      </table>
+      {text && time && <p className="text-gray-400 text-sm pl-3">
+        Searched 287k JLCPCB parts in {time}ms. {results.length === 100 ? "Showing first 100 results." : `${results.length} results.`}
+      </p>}
+      <ErrorBoundary FallbackComponent={ErrorFallback}>
+        <Tooltip id="stock" {...ttElProps} />
+        <Tooltip id="price"{...ttElProps} />
+        <Tooltip id="bore"{...ttElProps} />
+        <Tooltip id="image" {...ttElProps} render={({ content, activeAnchor }) => {
+          const url = activeAnchor?.getAttribute("data-image-url");
+          return (
+            <img className="rounded-sm" src={url!}></img>
+          )
+        }} />
+        <table className="table-auto">
+          <tbody>
+            {results.map((part: Part) => (
+              <ResistorRow key={part.manufacturer_id + part.description + part.price} {...part}></ResistorRow>
+            ))}
+          </tbody>
+        </table>
+      </ErrorBoundary>
     </SearchContext.Provider>
   </div>
 }
