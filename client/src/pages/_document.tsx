@@ -1,5 +1,6 @@
 import { Html, Head, Main, NextScript } from "next/document"
-import { Analytics } from "./analytics"
+import LogRocket from "logrocket"
+import { useEffect } from "react"
 
 export default function Document() {
   return (
@@ -12,4 +13,14 @@ export default function Document() {
       </body>
     </Html>
   )
+}
+
+const Analytics = () => {
+  useEffect(() => {
+    if (process.env.NODE_ENV === "production") {
+      LogRocket.init("phqm4b/zeptovolt")
+    }
+  }, [])
+
+  return <></>
 }
