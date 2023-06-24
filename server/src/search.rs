@@ -117,6 +117,7 @@ fn get_match_indexes(db: &mut PartsDb, word: String) -> &Vec<usize> {
             r.is_match(&p.description)
                 || r.is_match(&p.manufacturer_id)
                 || r.is_match(&p.basic_or_extended)
+                || r.is_match(&p.lcsc_id)
         };
 
         let indexes = db

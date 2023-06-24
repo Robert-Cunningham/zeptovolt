@@ -4,7 +4,7 @@
 
 "@babel/runtime@^7.12.5":
   version "7.22.5"
-  resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.22.5.tgz#8564dd588182ce0047d55d7a75e93921107b57ec"
+  resolved "https://registry.npmjs.org/@babel/runtime/-/runtime-7.22.5.tgz"
   integrity sha512-ecjvYlnAaZ/KVneE/OdKYBYfgXV3Ptu6zQWmgEF7vwKhQnvVS6bjMD2XYgj+SNvQ1GfK/pjgokfPkC/2CO8CuA==
   dependencies:
     regenerator-runtime "^0.13.11"
@@ -1558,6 +1558,11 @@ lodash.merge@^4.6.2:
   resolved "https://registry.npmjs.org/lodash.merge/-/lodash.merge-4.6.2.tgz"
   integrity sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==
 
+logrocket@^4.0.3:
+  version "4.0.3"
+  resolved "https://registry.npmjs.org/logrocket/-/logrocket-4.0.3.tgz"
+  integrity sha512-xtjGCjuB9hW+zVkTC1Pfp3woWXQS5vTXWEiMje2MpRPt63z7CgytUK70ACeBaWbsoWi3XhvTIN6E66ALmTxtBw==
+
 loose-envify@^1.1.0, loose-envify@^1.4.0:
   version "1.4.0"
   resolved "https://registry.npmjs.org/loose-envify/-/loose-envify-1.4.0.tgz"
@@ -1923,7 +1928,7 @@ react-dom@18.2.0:
 
 react-error-boundary@^4.0.9:
   version "4.0.9"
-  resolved "https://registry.yarnpkg.com/react-error-boundary/-/react-error-boundary-4.0.9.tgz#602f560e397ee25d7604cb5cb216351afc4be752"
+  resolved "https://registry.npmjs.org/react-error-boundary/-/react-error-boundary-4.0.9.tgz"
   integrity sha512-f6DcHVdTDZmc9ixmRmuLDZpkdghYR/HKZdUzMLHD58s4cR2C4R6y4ktYztCosM6pyeK4/C8IofwqxgID25W6kw==
   dependencies:
     "@babel/runtime" "^7.12.5"
