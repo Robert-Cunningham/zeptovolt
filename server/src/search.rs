@@ -1,4 +1,4 @@
-use std::{collections::HashMap, time::Instant};
+use std::{collections::HashMap, sync::RwLock, time::Instant};
 
 use indicatif::ProgressIterator;
 use regex::Regex;
@@ -23,10 +23,10 @@ enum JLPCBStatus {
     Neither,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct PartsDb {
     pub all_parts: Vec<Part>,
-    pub cache: HashMap<String, RoaringBitmap>,
+    pub cache: RwLock<HashMap<String, RoaringBitmap>>,
     pub last_update: Instant,
 }
 
@@ -34,9 +34,16 @@ impl PartsDb {
     fn new() -> PartsDb {
         PartsDb {
             all_parts: Vec::new(),
-            cache: HashMap::new(),
+            cache: RwLock::new(HashMap::new()),
             last_update: Instant::now(),
         }
+    }
+
+    pub fn clear_cache(&self) {
+        self.cache
+            .write()
+            .expect("parts search cache lock poisoned")
+            .clear();
     }
 }
 
@@ -52,7 +59,7 @@ pub fn sort_parts(parts: &mut Vec<&Part>) {
     log::debug!("first element after sort {:?}", parts.first());
 }
 
-pub fn search_parts_indexed<'a>(db: &'a mut PartsDb, string: &String) -> Vec<&'a Part> {
+pub fn search_parts_indexed<'a>(db: &'a PartsDb, string: &str) -> Vec<&'a Part> {
     let words = string
         .split_ascii_whitespace()
         .filter(|w| w.len() >= 2)
@@ -61,9 +68,7 @@ pub fn search_parts_indexed<'a>(db: &'a mut PartsDb, string: &String) -> Vec<&'a
 
     log::debug!("search words {:?}", words.len());
 
-    let mut bitmaps = words
-        .iter()
-        .map(|w| get_match_bitmap(db, w.to_string()).clone());
+    let mut bitmaps = words.iter().map(|w| get_match_bitmap(db, w));
     let mut out = bitmaps.next().unwrap_or_else(RoaringBitmap::new);
 
     log::debug!("first {:?}", out.len());
@@ -88,8 +93,18 @@ pub fn search_parts_indexed<'a>(db: &'a mut PartsDb, string: &String) -> Vec<&'a
     return parts;
 }
 
-fn get_match_bitmap(db: &mut PartsDb, word: String) -> &RoaringBitmap {
+fn get_match_bitmap(db: &PartsDb, word: &str) -> RoaringBitmap {
     assert!(word.len() >= 2);
+
+    if let Some(cached) = db
+        .cache
+        .read()
+        .expect("parts search cache lock poisoned")
+        .get(word)
+        .cloned()
+    {
+        return cached;
+    }
 
     let r = match Regex::new(&format!("(?i){}", word)) {
         Ok(r) => r,
@@ -99,30 +114,27 @@ fn get_match_bitmap(db: &mut PartsDb, word: String) -> &RoaringBitmap {
         }
     };
 
-    let cached = db.cache.entry(word);
+    let does_match = |p: &Part| {
+        r.is_match(&p.description)
+            || r.is_match(&p.manufacturer_id)
+            || r.is_match(&p.basic_or_extended)
+            || r.is_match(&p.lcsc_id)
+    };
 
-    let after = cached.or_insert_with(|| {
-        let does_match = |p: &Part| {
-            r.is_match(&p.description)
-                || r.is_match(&p.manufacturer_id)
-                || r.is_match(&p.basic_or_extended)
-                || r.is_match(&p.lcsc_id)
-        };
-
-        let mut indexes = RoaringBitmap::new();
-        for (i, p) in db.all_parts.iter().enumerate() {
-            if does_match(p) {
-                indexes.insert(i.try_into().expect("part index exceeded u32"));
-            }
+    let mut indexes = RoaringBitmap::new();
+    for (i, p) in db.all_parts.iter().enumerate() {
+        if does_match(p) {
+            indexes.insert(i.try_into().expect("part index exceeded u32"));
         }
+    }
 
-        indexes
-    });
+    let mut cache = db.cache.write().expect("parts search cache lock poisoned");
+    let cached = cache.entry(word.to_string()).or_insert_with(|| indexes);
 
-    return after;
+    return cached.clone();
 }
 
-fn common_words(db: &mut PartsDb) -> Vec<String> {
+fn common_words(db: &PartsDb) -> Vec<String> {
     let mut common: HashMap<String, usize> = HashMap::new();
 
     db.all_parts
@@ -151,13 +163,13 @@ fn common_words(db: &mut PartsDb) -> Vec<String> {
         .collect::<Vec<_>>()
 }
 
-pub fn warm_cache(db: &mut PartsDb) {
+pub fn warm_cache(db: &PartsDb) {
     common_words(db)
         .iter()
         .progress()
         .filter(|w| w.len() >= 2)
         .for_each(|w| {
             log::debug!("Analyzing: {}.", w);
-            get_match_bitmap(db, w.to_string());
+            get_match_bitmap(db, w);
         });
 }

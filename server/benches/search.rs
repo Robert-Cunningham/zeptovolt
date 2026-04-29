@@ -7,7 +7,7 @@ use server::{
 
 const QUERIES: [&str; 3] = ["0603", "10k", "0603 10k"];
 
-fn time_search(db: &mut PartsDb, query: &String) -> (Duration, usize) {
+fn time_search(db: &PartsDb, query: &str) -> (Duration, usize) {
     let started = Instant::now();
     let result_count = search_parts_indexed(db, query).len();
 
@@ -23,7 +23,7 @@ fn print_timing(label: &str, query: &str, duration: Duration, result_count: usiz
 
 fn main() {
     let runtime = tokio::runtime::Runtime::new().expect("failed to create Tokio runtime");
-    let mut db = runtime
+    let db = runtime
         .block_on(download_db())
         .expect("failed to download parts database");
 
@@ -31,13 +31,11 @@ fn main() {
     println!("Search timings:");
 
     for query in QUERIES {
-        let query_string = query.to_string();
-
-        db.cache.clear();
-        let (cold_duration, cold_count) = time_search(&mut db, &query_string);
+        db.clear_cache();
+        let (cold_duration, cold_count) = time_search(&db, query);
         print_timing("cold", query, cold_duration, cold_count);
 
-        let (warm_duration, warm_count) = time_search(&mut db, &query_string);
+        let (warm_duration, warm_count) = time_search(&db, query);
         print_timing("warm", query, warm_duration, warm_count);
     }
 }

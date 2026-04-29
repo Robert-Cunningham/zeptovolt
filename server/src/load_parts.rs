@@ -1,6 +1,6 @@
 use std::{
     collections::{HashMap, HashSet},
-    sync::Arc,
+    sync::{Arc, RwLock},
     time::Instant,
 };
 
@@ -250,7 +250,7 @@ pub async fn download_db() -> Result<PartsDb, anyhow::Error> {
 
     let db = PartsDb {
         all_parts: all_parts,
-        cache: HashMap::new(),
+        cache: RwLock::new(HashMap::new()),
         last_update: Instant::now(),
     };
 
