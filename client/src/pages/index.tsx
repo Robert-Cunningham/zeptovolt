@@ -13,6 +13,7 @@ const Home = () => {
     <>
       <Head>
         <title>Zeptovolt</title>
+        <link rel="preconnect" href={API_ENDPOINT} crossOrigin="anonymous" />
       </Head>
       <main>
         <div className="py-8 bg-slate-100 min-h-screen w-screen">
