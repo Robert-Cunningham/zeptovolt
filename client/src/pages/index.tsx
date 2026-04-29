@@ -208,9 +208,10 @@ const ttElProps = {
 }
 
 const API_ENDPOINT =
-  process.env.NODE_ENV === "development"
+  process.env.NEXT_PUBLIC_API_ENDPOINT ??
+  (process.env.NODE_ENV === "development"
     ? "http://localhost:8090"
-    : "https://api.zeptovolt.com"
+    : "https://api.zeptovolt.com")
 
 const CentralColumn = () => {
   const [text, setText] = useState<string>("")
