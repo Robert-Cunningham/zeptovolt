@@ -1,41 +1,52 @@
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
-use server::{
-    download_db,
-    search::{search_parts_indexed, PartsDb},
-};
+use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
+use server::{download_db, search::search_parts_indexed_with_info};
+use std::hint::black_box;
 
-const QUERIES: [&str; 5] = ["0603", "10k", "0603 10k", "300V", "resistor"];
+const QUERIES: [&str; 6] = ["0603", "10k", "0603 10k", "300V", "resistor", "resistor "];
 
-fn time_search(db: &PartsDb, query: &str) -> (Duration, usize) {
-    let started = Instant::now();
-    let result_count = search_parts_indexed(db, query).len();
-
-    (started.elapsed(), result_count)
-}
-
-fn print_timing(label: &str, query: &str, duration: Duration, result_count: usize) {
-    println!(
-        "{label:>5} {query:<9} {:>8.2?} ({result_count} matches)",
-        duration
-    );
-}
-
-fn main() {
+fn bench_search(c: &mut Criterion) {
     let runtime = tokio::runtime::Runtime::new().expect("failed to create Tokio runtime");
     let db = runtime
         .block_on(download_db())
         .expect("failed to download parts database");
 
-    println!("Loaded {} parts.", db.all_parts.len());
-    println!("Search timings:");
+    let mut group = c.benchmark_group("search");
+    group.warm_up_time(Duration::from_millis(500));
+    group.measurement_time(Duration::from_secs(3));
 
     for query in QUERIES {
-        db.clear_cache();
-        let (cold_duration, cold_count) = time_search(&db, query);
-        print_timing("cold", query, cold_duration, cold_count);
+        group.bench_with_input(
+            BenchmarkId::new("cold", format!("{query:?}")),
+            query,
+            |b, query| {
+                b.iter(|| {
+                    db.clear_cache();
+                    let result = search_parts_indexed_with_info(black_box(&db), black_box(query));
+                    black_box((result.parts.len(), result.parts_searched));
+                });
+            },
+        );
 
-        let (warm_duration, warm_count) = time_search(&db, query);
-        print_timing("warm", query, warm_duration, warm_count);
+        db.clear_cache();
+        let result = search_parts_indexed_with_info(&db, query);
+        black_box((result.parts.len(), result.parts_searched));
+
+        group.bench_with_input(
+            BenchmarkId::new("cached", format!("{query:?}")),
+            query,
+            |b, query| {
+                b.iter(|| {
+                    let result = search_parts_indexed_with_info(black_box(&db), black_box(query));
+                    black_box((result.parts.len(), result.parts_searched));
+                });
+            },
+        );
     }
+
+    group.finish();
 }
+
+criterion_group!(benches, bench_search);
+criterion_main!(benches);
