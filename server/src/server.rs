@@ -36,7 +36,7 @@ struct SearchResponse {
 struct SearchInfo {
     parts_searched: usize,
     total_results: usize,
-    server_time_ms: u64,
+    server_time_us: u64,
 }
 
 fn format_term_cache_status(terms: &[SearchTermInfo]) -> String {
@@ -57,7 +57,7 @@ async fn search(
     let start = std::time::Instant::now();
     let search_result = search_parts_indexed_with_info(&all_parts, &q);
     let server_time = start.elapsed();
-    let server_time_ms = server_time.as_millis().try_into().unwrap_or(u64::MAX);
+    let server_time_us = server_time.as_micros().try_into().unwrap_or(u64::MAX);
     let total_results = search_result.parts.len();
     let total_parts = all_parts.all_parts.len();
     let parts_searched = search_result.parts_searched;
@@ -69,9 +69,9 @@ async fn search(
         .cloned()
         .collect::<Vec<_>>();
     log::info!(
-        "Returned search {:?} in {}ms; results={} shown={} parts_searched={} terms=[{}]",
+        "Returned search {:?} in {}us; results={} shown={} parts_searched={} terms=[{}]",
         q,
-        server_time_ms,
+        server_time_us,
         total_results,
         prep.len(),
         parts_searched,
@@ -83,7 +83,7 @@ async fn search(
         info: SearchInfo {
             parts_searched: total_parts,
             total_results,
-            server_time_ms,
+            server_time_us,
         },
     });
 }

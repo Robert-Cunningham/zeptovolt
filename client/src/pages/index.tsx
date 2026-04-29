@@ -1,4 +1,5 @@
 import Head from "next/head"
+import Image from "next/image"
 import { useContext, useEffect, useState } from "react"
 import useSWR from "swr"
 import React from "react"
@@ -34,8 +35,8 @@ const Home = () => {
         <title>Zeptovolt</title>
         <link rel="preconnect" href={API_ENDPOINT} crossOrigin="anonymous" />
       </Head>
-      <main>
-        <div className="py-8 bg-slate-100 min-h-screen w-screen">
+      <main className="min-h-screen bg-[#f6f7f9] text-slate-900">
+        <div className="min-h-screen w-full px-4 py-6 sm:px-6">
           <CentralColumn></CentralColumn>
         </div>
       </main>
@@ -106,6 +107,20 @@ function shortenNumber(num: number): string | number {
   return shortNum.toString() + suffix
 }
 
+function formatDurationUs(durationUs: number): string {
+  const roundedUs = Math.max(Math.round(durationUs), 0)
+
+  if (roundedUs < 1000) {
+    return `${roundedUs}us`
+  }
+
+  return `${Math.round(roundedUs / 1000)}ms`
+}
+
+function hideFailedImage(event: React.SyntheticEvent<HTMLImageElement>): void {
+  event.currentTarget.style.display = "none"
+}
+
 function ResistorRow({
   image_url,
   description,
@@ -115,22 +130,14 @@ function ResistorRow({
   basic_or_extended,
   datasheet_url,
   lcsc_id,
-  first,
-  last,
-}: Part & { first: boolean; last: boolean }) {
+}: Part) {
   const search_strings = safeHighlightSearchWords(useContext(SearchContext))
 
   return (
-    <tr
-      className={
-        "bg-white border py-2 " +
-        (first ? " rounded-t-md " : "") +
-        (last ? " rounded-b-md " : "")
-      }
-    >
-      <td className="px-3 py-2 align-middle">
+    <tr className="bg-white transition-colors hover:bg-slate-50">
+      <td className="px-4 py-3 align-middle">
         <a href={datasheet_url}>
-          <p className="font-mono text-sm text-slate-600">
+          <p className="whitespace-nowrap font-mono text-sm text-slate-700">
             <Highlighter
               highlightClassName={highlightClassName}
               searchWords={search_strings}
@@ -139,7 +146,7 @@ function ResistorRow({
           </p>
         </a>
       </td>
-      <td className="px-3 py-2 align-middle">
+      <td className="px-4 py-3 align-middle">
         <button
           type="button"
           {...ttProps}
@@ -159,23 +166,29 @@ function ResistorRow({
           </Highlighter>
         </button>
       </td>
-      <td className="h-16 w-16 px-3 py-2 align-middle">
+      <td className="h-16 w-16 px-4 py-3 align-middle">
         {image_url && (
           <a
             {...ttProps}
             data-tooltip-id="image"
             data-image-url={`https://assets.lcsc.com/images/lcsc/224x224/${image_url}`}
           >
+            {/* eslint-disable-next-line @next/next/no-img-element -- LCSC blocks Next's server-side image optimizer fetches. */}
             <img
-              alt={description}
+              alt=""
               className="rounded-sm"
+              decoding="async"
+              height={48}
+              loading="lazy"
+              onError={hideFailedImage}
               src={`https://assets.lcsc.com/images/lcsc/96x96/${image_url}`}
+              width={48}
             ></img>
           </a>
         )}
       </td>
-      <td className="px-3 py-2 align-middle">
-        <p className="text-xs leading-4 text-slate-600">
+      <td className="min-w-[22rem] px-4 py-3 align-middle">
+        <p className="text-xs leading-5 text-slate-600">
           <Highlighter
             highlightClassName={highlightClassName}
             searchWords={search_strings}
@@ -185,7 +198,7 @@ function ResistorRow({
           </Highlighter>
         </p>
       </td>
-      <td className="px-3 py-2 text-center align-middle">
+      <td className="px-4 py-3 text-center align-middle">
         <p className="font-mono text-sm text-slate-600">
           <a
             {...ttProps}
@@ -198,7 +211,7 @@ function ResistorRow({
           </a>
         </p>
       </td>
-      <td className="px-3 py-2 text-right align-middle">
+      <td className="px-4 py-3 text-right align-middle">
         <p className="whitespace-nowrap font-mono text-sm tabular-nums text-slate-600">
           <a
             {...ttProps}
@@ -209,7 +222,7 @@ function ResistorRow({
           </a>
         </p>
       </td>
-      <td className="px-3 py-2 text-right align-middle">
+      <td className="px-4 py-3 text-right align-middle">
         <p className="whitespace-nowrap font-mono text-sm tabular-nums text-slate-600">
           <a
             {...ttProps}
@@ -246,11 +259,22 @@ const CentralColumn = () => {
   >()
 
   const dbText = useDebounce(text, 100)
+  const hasQuery = text.trim().length > 0
+  const queryReady = hasQuery && text === dbText
 
   const { response, controller } = useCancelableSWR<SearchResponse>(
-    `${API_ENDPOINT}/search?${new URLSearchParams({ q: dbText })}`
+    dbText.trim() === ""
+      ? null
+      : `${API_ENDPOINT}/search?${new URLSearchParams({ q: dbText })}`
   )
   const { data, isLoading, error } = response
+
+  useEffect(() => {
+    if (dbText.trim() === "") {
+      setResults([])
+      setSearchMetadata(undefined)
+    }
+  }, [dbText, setResults])
 
   useEffect(() => {
     if (data && !isLoading && !error) {
@@ -259,8 +283,8 @@ const CentralColumn = () => {
       setSearchMetadata({
         partsSearched: info.parts_searched,
         totalResults: info.total_results,
-        serverTimeMs: info.server_time_ms,
-        clientTimeMs: data.clientTimeMs,
+        serverTimeUs: info.server_time_us,
+        clientTimeUs: data.clientTimeUs,
       })
     }
   }, [data, isLoading, error, setResults])
@@ -270,29 +294,33 @@ const CentralColumn = () => {
     setText(newText)
   }
 
-  const clientTime = searchMetadata?.clientTimeMs
-  const serverTime = searchMetadata?.serverTimeMs
+  const clientTimeUs = searchMetadata?.clientTimeUs
+  const serverTimeUs = searchMetadata?.serverTimeUs
   const totalResults = searchMetadata?.totalResults ?? results.length
-  const networkTime =
-    clientTime !== undefined && serverTime !== undefined
-      ? Math.max(clientTime - serverTime, 0)
+  const networkTimeUs =
+    clientTimeUs !== undefined && serverTimeUs !== undefined
+      ? Math.max(clientTimeUs - serverTimeUs, 0)
       : undefined
-  const totalTime =
-    clientTime !== undefined && serverTime !== undefined
-      ? Math.max(clientTime, serverTime)
-      : clientTime ?? serverTime
+  const totalTimeUs =
+    clientTimeUs !== undefined && serverTimeUs !== undefined
+      ? Math.max(clientTimeUs, serverTimeUs)
+      : clientTimeUs ?? serverTimeUs
   const searchStatus =
-    text.trim() !== "" && text === dbText && totalTime !== undefined
+    hasQuery && (!queryReady || isLoading)
+      ? "Searching..."
+      : hasQuery && queryReady && totalTimeUs !== undefined
       ? `${
           searchMetadata?.partsSearched !== undefined
             ? `Searched ${shortenNumber(
                 searchMetadata.partsSearched
-              )} JLCPCB parts in ${totalTime}ms${
-                serverTime !== undefined && networkTime !== undefined
-                  ? ` (${serverTime}ms server + ${networkTime}ms network)`
+              )} JLCPCB parts in ${formatDurationUs(totalTimeUs)}${
+                serverTimeUs !== undefined && networkTimeUs !== undefined
+                  ? ` (${formatDurationUs(
+                      serverTimeUs
+                    )} server + ${formatDurationUs(networkTimeUs)} network)`
                   : ""
               }. `
-            : `Search completed in ${totalTime}ms. `
+            : `Search completed in ${formatDurationUs(totalTimeUs)}. `
         }${
           totalResults > results.length
             ? `Showing first ${results.length} of ${shortenNumber(
@@ -301,17 +329,63 @@ const CentralColumn = () => {
             : `${totalResults} results.`
         }`
       : ""
+  const showEmptyResults =
+    hasQuery && queryReady && !isLoading && !error && results.length === 0
 
   return (
-    <div className="md:max-w-4xl mx-auto flex flex-col gap-4">
+    <div
+      className={
+        hasQuery
+          ? "mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-6xl flex-col gap-4"
+          : "mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-3xl flex-col items-center justify-center pb-20"
+      }
+    >
       <SearchContext.Provider value={text}>
-        <div className="relative flex min-h-6 items-center justify-center px-3">
-          <p className="text-gray-800 font-semibold text-md text-center">
-            Fast JLCPCB Parts Search
-          </p>
+        <div
+          className={
+            hasQuery
+              ? "flex min-h-9 items-center justify-between gap-4"
+              : "mb-7 flex flex-col items-center text-center"
+          }
+        >
+          <div
+            className={
+              hasQuery
+                ? "flex items-center gap-2"
+                : "flex flex-col items-center gap-3"
+            }
+          >
+            <Image
+              alt=""
+              className={hasQuery ? "h-7 w-7" : "h-12 w-12"}
+              height={48}
+              src="/zeptovolt-icon.png"
+              width={48}
+            ></Image>
+            <div>
+              <h1
+                className={
+                  hasQuery
+                    ? "text-base font-semibold leading-6 text-slate-900"
+                    : "text-3xl font-semibold leading-10 text-slate-950"
+                }
+              >
+                Zeptovolt
+              </h1>
+              {!hasQuery && (
+                <p className="mt-1 text-sm leading-5 text-slate-500">
+                  Lightning fast JLCPCB / LCSC parts search
+                </p>
+              )}
+            </div>
+          </div>
           <a
             aria-label="GitHub repository"
-            className="absolute right-3 text-gray-500 hover:text-gray-700"
+            className={
+              hasQuery
+                ? "text-slate-400 transition hover:text-slate-700"
+                : "fixed right-5 top-5 text-slate-400 transition hover:text-slate-700"
+            }
             href="https://github.com/Robert-Cunningham/zeptovolt"
             rel="noreferrer"
             target="_blank"
@@ -330,14 +404,30 @@ const CentralColumn = () => {
             </svg>
           </a>
         </div>
-        <p className="px-3 text-center text-sm leading-5 text-slate-600">
-          Zeptovolt is a Rust-backed search for JLCPCB parts with full regex
-          support, updated every day from the public parts dataset.
-        </p>
         <SearchBox {...{ text, setText: cancelLastAndSetText }}></SearchBox>
+        {!hasQuery && (
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            {["10k 0603", "USB connector", "STM32", "basic resistor"].map(
+              (query) => (
+                <button
+                  key={query}
+                  type="button"
+                  className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm transition hover:border-slate-300 hover:text-slate-900 focus:outline-none focus:ring-4 focus:ring-sky-100"
+                  onClick={() => cancelLastAndSetText(query)}
+                >
+                  {query}
+                </button>
+              )
+            )}
+          </div>
+        )}
         <div
           aria-live="polite"
-          className="h-10 overflow-hidden px-3 text-gray-400 text-sm leading-5 sm:h-5"
+          className={
+            hasQuery
+              ? "h-10 overflow-hidden px-1 text-sm leading-5 text-slate-500 sm:h-5"
+              : "sr-only"
+          }
           title={searchStatus}
         >
           <p className="max-h-10 overflow-hidden sm:truncate">
@@ -355,22 +445,55 @@ const CentralColumn = () => {
             render={({ activeAnchor }) => {
               const url = activeAnchor?.getAttribute("data-image-url")
               return url ? (
-                <img alt="" className="rounded-sm" src={url}></img>
+                // eslint-disable-next-line @next/next/no-img-element -- LCSC blocks Next's server-side image optimizer fetches.
+                <img
+                  alt=""
+                  className="rounded-sm"
+                  decoding="async"
+                  height={224}
+                  loading="lazy"
+                  onError={hideFailedImage}
+                  src={url}
+                  width={224}
+                ></img>
               ) : null
             }}
           />
-          <table className="table-auto rounded-md">
-            <tbody>
-              {results.map((part: Part, i: number) => (
-                <ResistorRow
-                  key={part.lcsc_id}
-                  first={i === 0}
-                  last={i === results.length - 1}
-                  {...part}
-                ></ResistorRow>
-              ))}
-            </tbody>
-          </table>
+          {hasQuery && results.length > 0 && (
+            <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="min-w-full table-auto">
+                  <thead className="bg-slate-50 text-left text-[11px] uppercase tracking-wide text-slate-500">
+                    <tr>
+                      <th className="px-4 py-3 font-semibold">MPN</th>
+                      <th className="px-4 py-3 font-semibold">LCSC</th>
+                      <th className="px-4 py-3 font-semibold">Image</th>
+                      <th className="px-4 py-3 font-semibold">Description</th>
+                      <th className="px-4 py-3 text-center font-semibold">
+                        Type
+                      </th>
+                      <th className="px-4 py-3 text-right font-semibold">
+                        Price
+                      </th>
+                      <th className="px-4 py-3 text-right font-semibold">
+                        Stock
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {results.map((part: Part) => (
+                      <ResistorRow key={part.lcsc_id} {...part}></ResistorRow>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+          {showEmptyResults && (
+            <div className="rounded-lg border border-slate-200 bg-white px-6 py-10 text-center text-sm text-slate-500 shadow-sm">
+              No matching parts found.
+            </div>
+          )}
         </ErrorBoundary>
       </SearchContext.Provider>
     </div>
@@ -385,12 +508,29 @@ const SearchBox = ({
   setText: (a0: string) => void
 }) => {
   return (
-    <input
-      value={text}
-      onChange={(e) => setText(e.target.value)}
-      className="w-full h-8 rounded-lg text-sm p-5 border"
-      placeholder="10k 0603 resistor basic"
-    ></input>
+    <div className="relative w-full">
+      <svg
+        aria-hidden="true"
+        className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400"
+        fill="none"
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth="2"
+        viewBox="0 0 24 24"
+      >
+        <circle cx="11" cy="11" r="8"></circle>
+        <path d="m21 21-4.3-4.3"></path>
+      </svg>
+      <input
+        aria-label="Search parts"
+        autoFocus
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        className="h-14 w-full rounded-xl border border-slate-200 bg-white pl-12 pr-4 text-base text-slate-900 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-sky-400 focus:ring-4 focus:ring-sky-100"
+        placeholder="10k 0603 resistor basic"
+      ></input>
+    </div>
   )
 }
 
@@ -413,14 +553,14 @@ interface SearchResponse {
 interface SearchResponseInfo {
   parts_searched: number
   total_results: number
-  server_time_ms: number
+  server_time_us: number
 }
 
 interface SearchResponseMetadata {
   partsSearched: number
   totalResults: number
-  serverTimeMs: number
-  clientTimeMs: number
+  serverTimeUs: number
+  clientTimeUs: number
 }
 
 export default Home
@@ -448,25 +588,30 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue
 }
 
-function useCancelableSWR<T>(key: string) {
-  const controller = React.useMemo(() => new AbortController(), [key])
+function useCancelableSWR<T>(key: string | null) {
+  const controller = React.useMemo(() => createAbortController(key), [key])
 
   return {
     response: useSWR<TimedResponse<T>>(key, async (url: string) => {
       const startedAt = performance.now()
       const response = await fetch(url, { signal: controller.signal })
       const body = (await response.json()) as T
+      const elapsedMs = Math.max(performance.now() - startedAt, 0)
 
       return {
         body,
-        clientTimeMs: Math.max(Math.round(performance.now() - startedAt), 0),
+        clientTimeUs: Math.round(elapsedMs * 1000),
       }
     }),
     controller,
   }
 }
 
+function createAbortController(_key: string | null): AbortController {
+  return new AbortController()
+}
+
 interface TimedResponse<T> {
   body: T
-  clientTimeMs: number
+  clientTimeUs: number
 }
