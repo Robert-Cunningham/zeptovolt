@@ -8,6 +8,24 @@ import { ErrorBoundary } from "react-error-boundary"
 
 const SearchContext = React.createContext("")
 
+function escapeRegexLiteral(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+}
+
+function safeHighlightSearchWords(searchText: string): string[] {
+  return searchText
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((word) => {
+      try {
+        new RegExp(word)
+        return word
+      } catch {
+        return escapeRegexLiteral(word)
+      }
+    })
+}
+
 const Home = () => {
   return (
     <>
@@ -99,7 +117,7 @@ function ResistorRow({
   first,
   last,
 }: Part & { first: boolean; last: boolean }) {
-  const search_strings = useContext(SearchContext).split(" ")
+  const search_strings = safeHighlightSearchWords(useContext(SearchContext))
 
   return (
     <tr
