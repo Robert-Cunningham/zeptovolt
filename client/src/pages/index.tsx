@@ -253,10 +253,47 @@ const API_ENDPOINT =
 
 const CentralColumn = () => {
   const [text, setText] = useState<string>("")
+  const [isUrlReady, setIsUrlReady] = useState(false)
   const [results, setResults] = useState<Part[]>([])
   const [searchMetadata, setSearchMetadata] = useState<
     SearchResponseMetadata | undefined
   >()
+
+  useEffect(() => {
+    const syncTextFromUrl = () => {
+      const params = new URLSearchParams(window.location.search)
+      setText(params.get("q") ?? "")
+      setIsUrlReady(true)
+    }
+
+    syncTextFromUrl()
+    window.addEventListener("popstate", syncTextFromUrl)
+
+    return () => {
+      window.removeEventListener("popstate", syncTextFromUrl)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!isUrlReady) {
+      return
+    }
+
+    const url = new URL(window.location.href)
+
+    if (text.trim() === "") {
+      url.searchParams.delete("q")
+    } else {
+      url.searchParams.set("q", text)
+    }
+
+    const nextUrl = `${url.pathname}${url.search}${url.hash}`
+    const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`
+
+    if (nextUrl !== currentUrl) {
+      window.history.replaceState(window.history.state, "", nextUrl)
+    }
+  }, [isUrlReady, text])
 
   const dbText = useDebounce(text, 100)
   const hasQuery = text.trim().length > 0
