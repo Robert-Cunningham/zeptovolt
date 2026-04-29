@@ -1,21 +1,11 @@
 use std::{
     collections::{HashMap, HashSet},
-    net::SocketAddr,
-    sync::{Arc, Mutex},
     time::Instant,
 };
 
-use axum::{
-    extract::{Query, State},
-    routing::get,
-    Json, Router,
-};
 use indicatif::ProgressIterator;
-use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
-use tower::ServiceBuilder;
-use tower_http::cors::{Any, CorsLayer};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Part {
@@ -104,7 +94,7 @@ fn get_match_indexes(db: &mut PartsDb, word: String) -> &Vec<usize> {
 
     let r = match Regex::new(&format!("(?i){}", word)) {
         Ok(r) => r,
-        Err(e) => {
+        Err(_) => {
             let escaped = regex::escape(&word);
             Regex::new(&escaped).expect("Escaped regex failed to unwrap?")
         }

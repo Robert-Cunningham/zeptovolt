@@ -1,7 +1,7 @@
 use std::{
     collections::HashMap,
     net::SocketAddr,
-    sync::{Arc, Mutex},
+    sync::Arc,
     time::{Duration, Instant},
 };
 
@@ -10,9 +10,6 @@ use axum::{
     routing::get,
     Json, Router,
 };
-use futures::Future;
-use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
-use regex::Regex;
 use tower::ServiceBuilder;
 use tower_http::cors::{Any, CorsLayer};
 

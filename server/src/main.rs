@@ -1,5 +1,3 @@
-#![feature(async_closure)]
-
 mod load_parts;
 mod search;
 mod server;

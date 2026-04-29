@@ -1,15 +1,13 @@
 use std::{
     fs,
     path::PathBuf,
-    time::{Instant, SystemTime, UNIX_EPOCH},
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 use bytes::Buf;
 use flate2::read::GzDecoder;
-use futures::StreamExt;
-use reqwest::{Client, Url};
-use serde_json::Value;
-use std::{error::Error, io::Read};
+use reqwest::Url;
+use std::io::Read;
 use tokio::{
     fs::File,
     io::{AsyncReadExt, AsyncWriteExt},
@@ -61,10 +59,14 @@ pub async fn cached_get(url: String) -> Result<String> {
     match File::open(cache_path.clone()).await {
         Err(_) => {
             let client = reqwest::Client::builder().gzip(true).build()?;
-            let body = client.get(parsed_url).send().await?;
+            let body = client
+                .get(parsed_url.clone())
+                .send()
+                .await?
+                .error_for_status()?;
             let mut write_file = File::create(cache_path).await?;
 
-            if url.contains(".json.gz") {
+            if parsed_url.path().ends_with(".gz") {
                 let bytes = body.bytes().await?;
                 let mut gz = GzDecoder::new(bytes.reader());
                 let mut text: String = String::from("");
