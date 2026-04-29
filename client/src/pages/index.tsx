@@ -119,34 +119,35 @@ function ResistorRow({
         </a>
       </td>
       <td className="px-2">
-        <a
+        <button
+          type="button"
           {...ttProps}
           data-tooltip-id="lcsc"
           data-tooltip-content="Click to copy"
+          className="text-gray-600 hover:bg-yellow-100 cursor-pointer inline-flex active:bg-green-100 transition-colors transition-none duration-100 bg-transparent border-0 p-0"
+          onClick={() => {
+            navigator.clipboard.writeText(lcsc_id)
+          }}
         >
-          <p
-            className="text-gray-600 hover:bg-yellow-100 cursor-pointer flex-inline active:bg-green-100 transition-colors transition-none duration-100"
-            onClick={() => {
-              navigator.clipboard.writeText(lcsc_id)
-            }}
-          >
-            <Highlighter searchWords={search_strings} textToHighlight={lcsc_id}>
-              {" "}
-            </Highlighter>
-          </p>
-        </a>
+          <Highlighter searchWords={search_strings} textToHighlight={lcsc_id}>
+            {" "}
+          </Highlighter>
+        </button>
       </td>
       <td className="px-2 w-16 h-16">
-        <a
-          {...ttProps}
-          data-tooltip-id="image"
-          data-image-url={`https://assets.lcsc.com/images/lcsc/224x224/${image_url}`}
-        >
-          <img
-            className="rounded-sm"
-            src={`https://assets.lcsc.com/images/lcsc/96x96/${image_url}`}
-          ></img>
-        </a>
+        {image_url && (
+          <a
+            {...ttProps}
+            data-tooltip-id="image"
+            data-image-url={`https://assets.lcsc.com/images/lcsc/224x224/${image_url}`}
+          >
+            <img
+              alt={description}
+              className="rounded-sm"
+              src={`https://assets.lcsc.com/images/lcsc/96x96/${image_url}`}
+            ></img>
+          </a>
+        )}
       </td>
       <td className="px-2">
         <p className="text-gray-600">
@@ -268,16 +269,18 @@ const CentralColumn = () => {
           <Tooltip
             id="image"
             {...ttElProps}
-            render={({ content, activeAnchor }) => {
+            render={({ activeAnchor }) => {
               const url = activeAnchor?.getAttribute("data-image-url")
-              return <img className="rounded-sm" src={url!}></img>
+              return url ? (
+                <img alt="" className="rounded-sm" src={url}></img>
+              ) : null
             }}
           />
           <table className="table-auto rounded-md">
             <tbody>
               {results.map((part: Part, i: number) => (
                 <ResistorRow
-                  key={part.manufacturer_id + part.description + part.price}
+                  key={part.lcsc_id}
                   first={i === 0}
                   last={i === results.length - 1}
                   {...part}
@@ -312,7 +315,7 @@ interface Part {
   description: string
   lcsc_id: string
   manufacturer_id: string
-  image_url: string
+  image_url: string | null
   datasheet_url: string
   basic_or_extended: string
   price: number
