@@ -6,7 +6,7 @@ use serde_json::Value;
 
 use crate::{
     search::{Part, PartsDb},
-    utils::cached_get,
+    utils::{cached_get, cleanup_old_cache_dirs},
 };
 
 pub async fn process_category(s: String) -> Result<Vec<Part>> {
@@ -121,6 +121,8 @@ pub async fn download_db() -> Result<PartsDb, anyhow::Error> {
         cache: HashMap::new(),
         last_update: Instant::now(),
     };
+
+    cleanup_old_cache_dirs()?;
 
     return Ok(db);
 }
