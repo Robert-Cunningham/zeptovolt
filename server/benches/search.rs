@@ -5,7 +5,7 @@ use server::{
     search::{search_parts_indexed, PartsDb},
 };
 
-const QUERIES: [&str; 3] = ["0603", "10k", "0603 10k"];
+const QUERIES: [&str; 5] = ["0603", "10k", "0603 10k", "300V", "resistor"];
 
 fn time_search(db: &PartsDb, query: &str) -> (Duration, usize) {
     let started = Instant::now();

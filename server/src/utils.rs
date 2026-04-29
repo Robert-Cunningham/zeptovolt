@@ -55,7 +55,6 @@ pub async fn cached_get(url: String) -> Result<String> {
     let cache_path = PathBuf::from(cache_path_str);
     fs::create_dir_all(cache_path.parent().unwrap())?;
 
-    // println!("{:?}", cache_path);
     match File::open(cache_path.clone()).await {
         Err(_) => {
             let client = reqwest::Client::builder().gzip(true).build()?;
