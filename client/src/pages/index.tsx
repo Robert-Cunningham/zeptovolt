@@ -7,6 +7,7 @@ import { Tooltip } from "react-tooltip"
 import { ErrorBoundary } from "react-error-boundary"
 
 const SearchContext = React.createContext("")
+const highlightClassName = "rounded-sm bg-amber-50 px-0.5 text-slate-700"
 
 function escapeRegexLiteral(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
@@ -127,33 +128,38 @@ function ResistorRow({
         (last ? " rounded-b-md " : "")
       }
     >
-      <td className="px-2 mr-0">
+      <td className="px-3 py-2 align-middle">
         <a href={datasheet_url}>
-          <p className="text-gray-600">
+          <p className="font-mono text-sm text-slate-600">
             <Highlighter
+              highlightClassName={highlightClassName}
               searchWords={search_strings}
               textToHighlight={manufacturer_id}
             ></Highlighter>
           </p>
         </a>
       </td>
-      <td className="px-2">
+      <td className="px-3 py-2 align-middle">
         <button
           type="button"
           {...ttProps}
           data-tooltip-id="lcsc"
           data-tooltip-content="Click to copy"
-          className="text-gray-600 hover:bg-yellow-100 cursor-pointer inline-flex active:bg-green-100 transition-colors transition-none duration-100 bg-transparent border-0 p-0"
+          className="inline-flex cursor-pointer border-0 bg-transparent p-0 font-mono text-sm text-slate-600 transition-colors duration-100 hover:bg-amber-50 active:bg-green-100"
           onClick={() => {
             navigator.clipboard.writeText(lcsc_id)
           }}
         >
-          <Highlighter searchWords={search_strings} textToHighlight={lcsc_id}>
+          <Highlighter
+            highlightClassName={highlightClassName}
+            searchWords={search_strings}
+            textToHighlight={lcsc_id}
+          >
             {" "}
           </Highlighter>
         </button>
       </td>
-      <td className="px-2 w-16 h-16">
+      <td className="h-16 w-16 px-3 py-2 align-middle">
         {image_url && (
           <a
             {...ttProps}
@@ -168,9 +174,10 @@ function ResistorRow({
           </a>
         )}
       </td>
-      <td className="px-2">
-        <p className="text-gray-600">
+      <td className="px-3 py-2 align-middle">
+        <p className="text-xs leading-4 text-slate-600">
           <Highlighter
+            highlightClassName={highlightClassName}
             searchWords={search_strings}
             textToHighlight={description}
           >
@@ -178,8 +185,8 @@ function ResistorRow({
           </Highlighter>
         </p>
       </td>
-      <td className="px-2">
-        <p className="text-gray-600">
+      <td className="px-3 py-2 text-center align-middle">
+        <p className="font-mono text-sm text-slate-600">
           <a
             {...ttProps}
             data-tooltip-id="bore"
@@ -191,8 +198,8 @@ function ResistorRow({
           </a>
         </p>
       </td>
-      <td className="px-2">
-        <p className="text-gray-600">
+      <td className="px-3 py-2 text-right align-middle">
+        <p className="whitespace-nowrap font-mono text-sm tabular-nums text-slate-600">
           <a
             {...ttProps}
             data-tooltip-id="price"
@@ -202,8 +209,8 @@ function ResistorRow({
           </a>
         </p>
       </td>
-      <td className="px-2">
-        <p className="text-gray-600">
+      <td className="px-3 py-2 text-right align-middle">
+        <p className="whitespace-nowrap font-mono text-sm tabular-nums text-slate-600">
           <a
             {...ttProps}
             data-tooltip-id="stock"
@@ -227,10 +234,9 @@ const ttElProps = {
 }
 
 const API_ENDPOINT =
-  process.env.NEXT_PUBLIC_API_ENDPOINT ??
-  (process.env.NODE_ENV === "development"
+  process.env.NODE_ENV === "development"
     ? "http://localhost:8090"
-    : "https://api.zeptovolt.com")
+    : process.env.NEXT_PUBLIC_API_ENDPOINT ?? "https://api.zeptovolt.com"
 
 const CentralColumn = () => {
   const [text, setText] = useState<string>("")
@@ -261,7 +267,6 @@ const CentralColumn = () => {
 
   const cancelLastAndSetText = (newText: string) => {
     controller.abort()
-    setSearchMetadata(undefined)
     setText(newText)
   }
 
