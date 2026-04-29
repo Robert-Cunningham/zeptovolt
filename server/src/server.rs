@@ -54,12 +54,12 @@ async fn search(
 ) -> Json<SearchResponse> {
     let q = params.get("q").unwrap().to_string();
     let all_parts = wss.db.read().await;
-    let parts_searched = all_parts.all_parts.len();
     let start = std::time::Instant::now();
     let search_result = search_parts_indexed_with_info(&all_parts, &q);
     let server_time = start.elapsed();
     let server_time_ms = server_time.as_millis().try_into().unwrap_or(u64::MAX);
     let total_results = search_result.parts.len();
+    let parts_searched = search_result.parts_searched;
     let term_cache_status = format_term_cache_status(&search_result.terms);
     let prep = search_result
         .parts
