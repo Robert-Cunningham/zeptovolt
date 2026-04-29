@@ -1,8 +1,15 @@
 # Zeptovolt
 
-Zeptovolt is a Rust-backed JLCPCB parts search with full regex support, parallelized scans, and prefix-aware Roaring bitmap caching over a regularly refreshed public parts dataset.
+Zeptovolt is a Rust-backed JLCPCB parts search with full regex support, parallelized scans, and prefix-aware bitmap caching over a regularly refreshed public parts dataset.
 
-It pulls data from [yaqwsx/jlcparts](https://yaqwsx.github.io/jlcparts) and allows searches that are over 10x faster in the benchmarks below.
+It's backed by data from [yaqwsx/jlcparts](https://yaqwsx.github.io/jlcparts) and typically returns search results more than 10x faster.
+
+## Screenshots
+![Zeptovolt home screen](assets/zeptovolt-home.png)
+
+![Zeptovolt search results](assets/zeptovolt-results.png)
+
+## Performance
 
 | Query | Cold | Warm | yaqwsx/jlcparts | Matches |
 |---|---:|---:|---:|---:|
@@ -12,4 +19,9 @@ It pulls data from [yaqwsx/jlcparts](https://yaqwsx.github.io/jlcparts) and allo
 
 Zeptovolt's listed latencies do not include network time, which will add 100-200ms in practice.
 
-The backend is a threaded Rust/Axum search service. It downloads the public JLC parts dataset into memory, scans uncached terms in parallel with Rayon, stores each term's matches as a compressed Roaring bitmap, and resolves multi-term searches with fast bitmap intersections.
+## Implementation Details
+The backend is a threaded Rust/Axum search service. It downloads the public JLC parts dataset, stores each query's matches as a compressed bitmap, resolves multi-term searches with fast bitmap intersections, and scans uncached terms in parallel with Rayon.
+
+## Related
+
+- [yaqwsx/jlcparts](https://github.com/yaqwsx/jlcparts) Zeptovolt uses the data published by this project as its upstream source, while keeping the searchable index server-side for faster lookups.
