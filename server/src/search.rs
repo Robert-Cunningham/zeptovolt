@@ -57,6 +57,7 @@ impl SearchTermInfo {
 struct MatchBitmap {
     bitmap: RoaringBitmap,
     cached: bool,
+    parts_searched: usize,
 }
 
 impl PartsDb {
@@ -106,9 +107,7 @@ pub fn search_parts_indexed_with_info<'a>(db: &'a PartsDb, string: &str) -> Sear
     let mut parts_searched = 0usize;
     for word in words {
         let match_bitmap = get_match_bitmap(db, &word);
-        if !match_bitmap.cached {
-            parts_searched = parts_searched.saturating_add(db.all_parts.len());
-        }
+        parts_searched = parts_searched.saturating_add(match_bitmap.parts_searched);
         terms.push(SearchTermInfo {
             term: word,
             cached: match_bitmap.cached,
@@ -162,6 +161,28 @@ fn get_cached_match_bitmap(db: &PartsDb, word: &str) -> Option<RoaringBitmap> {
         .cloned()
 }
 
+fn get_cached_literal_prefix_bitmap(db: &PartsDb, word: &str) -> Option<RoaringBitmap> {
+    if word.chars().any(|c| {
+        matches!(
+            c,
+            '\\' | '.' | '+' | '*' | '?' | '(' | ')' | '|' | '[' | ']' | '{' | '}' | '^' | '$'
+        )
+    }) {
+        return None;
+    }
+
+    let cache = db.cache.read().expect("parts search cache lock poisoned");
+    for end in (2..word.len()).rev() {
+        if word.is_char_boundary(end) {
+            if let Some(bitmap) = cache.get(&word[..end]) {
+                return Some(bitmap.clone());
+            }
+        }
+    }
+
+    None
+}
+
 fn compile_match_regex(word: &str) -> Regex {
     match Regex::new(&format!("(?i){}", word)) {
         Ok(r) => r,
@@ -179,10 +200,25 @@ fn part_matches(r: &Regex, p: &Part) -> bool {
         || r.is_match(&p.lcsc_id)
 }
 
-fn get_match_bitmap_for_all_parts_parallel(db: &PartsDb, word: &str) -> RoaringBitmap {
+fn get_match_bitmap_for_uncached_term(db: &PartsDb, word: &str) -> (RoaringBitmap, usize) {
     let r = compile_match_regex(word);
 
-    db.all_parts
+    if let Some(candidates) = get_cached_literal_prefix_bitmap(db, word) {
+        let mut indexes = RoaringBitmap::new();
+
+        for i in &candidates {
+            if let Some(p) = db.all_parts.get(i as usize) {
+                if part_matches(&r, p) {
+                    indexes.insert(i);
+                }
+            }
+        }
+
+        return (indexes, candidates.len() as usize);
+    }
+
+    let indexes = db
+        .all_parts
         .par_iter()
         .enumerate()
         .fold(RoaringBitmap::new, |mut indexes, (i, p)| {
@@ -195,14 +231,9 @@ fn get_match_bitmap_for_all_parts_parallel(db: &PartsDb, word: &str) -> RoaringB
         .reduce(RoaringBitmap::new, |mut left, right| {
             left |= right;
             left
-        })
-}
+        });
 
-fn save_match_bitmap(db: &PartsDb, word: &str, indexes: RoaringBitmap) -> RoaringBitmap {
-    let mut cache = db.cache.write().expect("parts search cache lock poisoned");
-    let cached = cache.entry(word.to_string()).or_insert_with(|| indexes);
-
-    cached.clone()
+    (indexes, db.all_parts.len())
 }
 
 fn get_match_bitmap(db: &PartsDb, word: &str) -> MatchBitmap {
@@ -212,16 +243,25 @@ fn get_match_bitmap(db: &PartsDb, word: &str) -> MatchBitmap {
         return MatchBitmap {
             bitmap: cached,
             cached: true,
+            parts_searched: 0,
         };
     }
 
-    let indexes = get_match_bitmap_for_all_parts_parallel(db, word);
+    let (indexes, parts_searched) = get_match_bitmap_for_uncached_term(db, word);
     let cached = save_match_bitmap(db, word, indexes);
 
     return MatchBitmap {
         bitmap: cached,
         cached: false,
+        parts_searched,
     };
+}
+
+fn save_match_bitmap(db: &PartsDb, word: &str, indexes: RoaringBitmap) -> RoaringBitmap {
+    let mut cache = db.cache.write().expect("parts search cache lock poisoned");
+    let cached = cache.entry(word.to_string()).or_insert_with(|| indexes);
+
+    cached.clone()
 }
 
 fn common_words(db: &PartsDb) -> Vec<String> {

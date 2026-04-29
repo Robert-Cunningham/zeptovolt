@@ -59,7 +59,6 @@ async fn search(
     let server_time = start.elapsed();
     let server_time_ms = server_time.as_millis().try_into().unwrap_or(u64::MAX);
     let total_results = search_result.parts.len();
-    let total_parts = all_parts.all_parts.len();
     let parts_searched = search_result.parts_searched;
     let term_cache_status = format_term_cache_status(&search_result.terms);
     let prep = search_result
@@ -81,7 +80,7 @@ async fn search(
     return Json(SearchResponse {
         results: prep,
         info: SearchInfo {
-            parts_searched: total_parts,
+            parts_searched,
             total_results,
             server_time_ms,
         },
