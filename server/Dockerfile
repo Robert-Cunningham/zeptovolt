@@ -1,5 +1,5 @@
 # build server
-FROM rustlang/rust:nightly as server-builder
+FROM rust:1.95.0-bullseye AS server-builder
 WORKDIR /usr/src/server
 COPY . .
 RUN cargo install --path .
