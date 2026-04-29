@@ -1,14 +1,9 @@
 import Head from "next/head"
-import Image from "next/image"
-import { Inter } from "@next/font/google"
-import styles from "@/styles/Home.module.css"
 import { useContext, useEffect, useState } from "react"
 import useSWR from "swr"
 import React from "react"
 import Highlighter from "react-highlight-words"
 import { Tooltip } from "react-tooltip"
-import { renderToHTML } from "next/dist/server/render"
-import { start } from "repl"
 import { ErrorBoundary } from "react-error-boundary"
 
 const SearchContext = React.createContext("")
@@ -45,10 +40,6 @@ const ErrorFallback = ({ error }: { error: Error }) => {
     )
   }
 }
-
-/*
-Can you write me a typescript function which converts a float to a string of US dollars? For example, the price 3.34234 should be displayed as $3.34. Any prices less than a cent should be displayed to one significant digit. For example, 0.000000234 should be displayed as $0.0000002.
-*/
 
 function formatUSDPrice(value: number): string {
   const options: Intl.NumberFormatOptions = {
@@ -94,11 +85,6 @@ function shortenNumber(num: number): string | number {
   const shortNum = Math.round(num / divisor)
   return shortNum.toString() + suffix
 }
-
-// Example usage:
-// console.log(shortenNumber(4711));     // "4k"
-// console.log(shortenNumber(5125829));   // "5M"
-// console.log(shortenNumber(NaN));       // NaN
 
 function ResistorRow({
   image_url,
@@ -305,8 +291,6 @@ const CentralColumn = () => {
   )
 }
 
-// <input type="search" id="default-search" className="block w-full p-4 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" placeholder="Search Mockups, Logos..." required
-
 const SearchBox = ({
   text,
   setText,
@@ -359,9 +343,6 @@ function useDebounce<T>(value: T, delay: number): T {
   )
   return debouncedValue
 }
-
-// @ts-ignore
-const fetcher = (...args) => fetch(...args).then((x) => x.json())
 
 //@ts-ignore
 function useCancelableSWR(key) {
