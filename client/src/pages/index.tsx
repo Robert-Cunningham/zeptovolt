@@ -220,7 +220,7 @@ const CentralColumn = () => {
     SearchResponseMetadata | undefined
   >()
 
-  const dbText = useDebounce(text, 150)
+  const dbText = text
 
   const { response, controller } = useCancelableSWR<SearchApiResponse>(
     `${API_ENDPOINT}/search?${new URLSearchParams({ q: dbText })}`
