@@ -1,6 +1,7 @@
 use std::{collections::HashMap, sync::RwLock, time::Instant};
 
 use indicatif::ProgressIterator;
+use rayon::prelude::*;
 use regex::Regex;
 use roaring::RoaringBitmap;
 use serde::{Deserialize, Serialize};
@@ -121,12 +122,21 @@ fn get_match_bitmap(db: &PartsDb, word: &str) -> RoaringBitmap {
             || r.is_match(&p.lcsc_id)
     };
 
-    let mut indexes = RoaringBitmap::new();
-    for (i, p) in db.all_parts.iter().enumerate() {
-        if does_match(p) {
-            indexes.insert(i.try_into().expect("part index exceeded u32"));
-        }
-    }
+    let indexes = db
+        .all_parts
+        .par_iter()
+        .enumerate()
+        .fold(RoaringBitmap::new, |mut indexes, (i, p)| {
+            if does_match(p) {
+                indexes.insert(u32::try_from(i).expect("part index exceeded u32"));
+            }
+
+            indexes
+        })
+        .reduce(RoaringBitmap::new, |mut left, right| {
+            left |= right;
+            left
+        });
 
     let mut cache = db.cache.write().expect("parts search cache lock poisoned");
     let cached = cache.entry(word.to_string()).or_insert_with(|| indexes);
