@@ -1,10 +1,8 @@
-use std::{
-    collections::{HashMap, HashSet},
-    time::Instant,
-};
+use std::{collections::HashMap, time::Instant};
 
 use indicatif::ProgressIterator;
 use regex::Regex;
+use roaring::RoaringBitmap;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -28,7 +26,7 @@ enum JLPCBStatus {
 #[derive(Clone, Debug)]
 pub struct PartsDb {
     pub all_parts: Vec<Part>,
-    pub cache: HashMap<String, Vec<usize>>,
+    pub cache: HashMap<String, RoaringBitmap>,
     pub last_update: Instant,
 }
 
@@ -43,7 +41,7 @@ impl PartsDb {
 }
 
 pub fn sort_parts(parts: &mut Vec<&Part>) {
-    println!("first element {:?}", parts.first());
+    log::debug!("first element {:?}", parts.first());
     parts.sort_unstable_by_key(|x| {
         if x.basic_or_extended == "Basic" {
             -1 * (x.stock as i32)
@@ -51,45 +49,46 @@ pub fn sort_parts(parts: &mut Vec<&Part>) {
             i32::MAX - x.stock as i32
         }
     });
-    println!("first element after sort {:?}", parts.first());
+    log::debug!("first element after sort {:?}", parts.first());
 }
 
 pub fn search_parts_indexed<'a>(db: &'a mut PartsDb, string: &String) -> Vec<&'a Part> {
-    let words = string.split_ascii_whitespace().filter(|w| w.len() >= 2);
-    let indexes_set: Vec<_> = words
-        .map(|w| HashSet::from_iter(get_match_indexes(db, w.to_string()).iter().cloned()))
-        .collect();
+    let words = string
+        .split_ascii_whitespace()
+        .filter(|w| w.len() >= 2)
+        .map(str::to_string)
+        .collect::<Vec<_>>();
 
-    println!("is {:?}", indexes_set.len());
+    log::debug!("search words {:?}", words.len());
 
-    let mut indexes_iter = indexes_set.into_iter();
-    let first = indexes_iter.next().unwrap_or_default();
+    let mut bitmaps = words
+        .iter()
+        .map(|w| get_match_bitmap(db, w.to_string()).clone());
+    let mut out = bitmaps.next().unwrap_or_else(RoaringBitmap::new);
 
-    println!("first {:?}", first.len());
+    log::debug!("first {:?}", out.len());
 
-    let out = indexes_iter.fold(first, |set1: HashSet<usize>, set2: HashSet<usize>| {
-        set1.intersection(&set2)
-            .cloned()
-            .collect::<HashSet<usize, _>>()
-    });
+    for bitmap in bitmaps {
+        out &= bitmap;
+    }
 
-    println!("out {:?}", out.len());
+    log::debug!("out {:?}", out.len());
 
     let mut parts = out
         .iter()
-        .map(|i| db.all_parts.get(*i).unwrap())
+        .filter_map(|i| db.all_parts.get(i as usize))
         .collect::<Vec<_>>();
 
-    println!("bs first element {:?}", parts.first());
+    log::debug!("before sort first element {:?}", parts.first());
     sort_parts(&mut parts);
-    println!("as first element {:?}", parts.first());
+    log::debug!("after sort first element {:?}", parts.first());
 
-    println!("parts {:?}", parts.len());
+    log::debug!("parts {:?}", parts.len());
 
     return parts;
 }
 
-fn get_match_indexes(db: &mut PartsDb, word: String) -> &Vec<usize> {
+fn get_match_bitmap(db: &mut PartsDb, word: String) -> &RoaringBitmap {
     assert!(word.len() >= 2);
 
     let r = match Regex::new(&format!("(?i){}", word)) {
@@ -110,20 +109,14 @@ fn get_match_indexes(db: &mut PartsDb, word: String) -> &Vec<usize> {
                 || r.is_match(&p.lcsc_id)
         };
 
-        let indexes = db
-            .all_parts
-            .iter()
-            .enumerate()
-            .filter_map(|(i, p)| {
-                if does_match(p) {
-                    Some(i as usize)
-                } else {
-                    None
-                }
-            })
-            .collect::<Vec<_>>();
+        let mut indexes = RoaringBitmap::new();
+        for (i, p) in db.all_parts.iter().enumerate() {
+            if does_match(p) {
+                indexes.insert(i.try_into().expect("part index exceeded u32"));
+            }
+        }
 
-        return indexes;
+        indexes
     });
 
     return after;
@@ -164,7 +157,7 @@ pub fn warm_cache(db: &mut PartsDb) {
         .progress()
         .filter(|w| w.len() >= 2)
         .for_each(|w| {
-            println!("Analyzing: {}.", w);
-            get_match_indexes(db, w.to_string());
+            log::debug!("Analyzing: {}.", w);
+            get_match_bitmap(db, w.to_string());
         });
 }
