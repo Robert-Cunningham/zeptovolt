@@ -11,7 +11,7 @@ use tower_http::cors::{Any, CorsLayer};
 
 use crate::{
     download_db,
-    search::{search_parts_indexed, Part, PartsDb},
+    search::{search_parts_indexed_with_info, Part, PartsDb, SearchTermInfo},
 };
 
 #[derive(Clone)]
@@ -39,6 +39,14 @@ struct SearchInfo {
     server_time_ms: u64,
 }
 
+fn format_term_cache_status(terms: &[SearchTermInfo]) -> String {
+    terms
+        .iter()
+        .map(|term| format!("{}={}", term.term, term.cache_status()))
+        .collect::<Vec<_>>()
+        .join(", ")
+}
+
 #[axum_macros::debug_handler]
 async fn search(
     Query(params): Query<HashMap<String, String>>,
@@ -48,18 +56,33 @@ async fn search(
     let all_parts = wss.db.read().await;
     let parts_searched = all_parts.all_parts.len();
     let start = std::time::Instant::now();
-    let results = search_parts_indexed(&all_parts, &q);
+    let search_result = search_parts_indexed_with_info(&all_parts, &q);
     let server_time = start.elapsed();
-    let total_results = results.len();
-    log::debug!("Searched for {} in {:?}.", q, server_time);
-    let prep = results.into_iter().take(100).cloned().collect::<Vec<_>>();
+    let server_time_ms = server_time.as_millis().try_into().unwrap_or(u64::MAX);
+    let total_results = search_result.parts.len();
+    let term_cache_status = format_term_cache_status(&search_result.terms);
+    let prep = search_result
+        .parts
+        .into_iter()
+        .take(100)
+        .cloned()
+        .collect::<Vec<_>>();
+    log::info!(
+        "Returned search {:?} in {}ms; results={} shown={} parts_searched={} terms=[{}]",
+        q,
+        server_time_ms,
+        total_results,
+        prep.len(),
+        parts_searched,
+        term_cache_status
+    );
 
     return Json(SearchResponse {
         results: prep,
         info: SearchInfo {
             parts_searched,
             total_results,
-            server_time_ms: server_time.as_millis().try_into().unwrap_or(u64::MAX),
+            server_time_ms,
         },
     });
 }
