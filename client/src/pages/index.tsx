@@ -222,17 +222,19 @@ const CentralColumn = () => {
 
   const dbText = text
 
-  const { response, controller } = useCancelableSWR<SearchApiResponse>(
+  const { response, controller } = useCancelableSWR<SearchResponse>(
     `${API_ENDPOINT}/search?${new URLSearchParams({ q: dbText })}`
   )
   const { data, isLoading, error } = response
 
   useEffect(() => {
     if (data && !isLoading && !error) {
-      const normalized = normalizeSearchResponse(data.body)
-      setResults(normalized.results)
+      const { info, results } = data.body
+      setResults(results)
       setSearchMetadata({
-        ...normalized.metadata,
+        partsSearched: info.parts_searched,
+        totalResults: info.total_results,
+        serverTimeMs: info.server_time_ms,
         clientTimeMs: data.clientTimeMs,
       })
     }
@@ -246,6 +248,7 @@ const CentralColumn = () => {
 
   const clientTime = searchMetadata?.clientTimeMs
   const serverTime = searchMetadata?.serverTimeMs
+  const totalResults = searchMetadata?.totalResults ?? results.length
   const networkTime =
     clientTime !== undefined && serverTime !== undefined
       ? Math.max(clientTime - serverTime, 0)
@@ -254,6 +257,26 @@ const CentralColumn = () => {
     clientTime !== undefined && serverTime !== undefined
       ? Math.max(clientTime, serverTime)
       : clientTime ?? serverTime
+  const searchStatus =
+    text === dbText && totalTime !== undefined
+      ? `${
+          searchMetadata?.partsSearched !== undefined
+            ? `Searched ${shortenNumber(
+                searchMetadata.partsSearched
+              )} JLCPCB parts in ${totalTime}ms${
+                serverTime !== undefined && networkTime !== undefined
+                  ? ` (${serverTime}ms server + ${networkTime}ms network)`
+                  : ""
+              }. `
+            : `Search completed in ${totalTime}ms. `
+        }${
+          totalResults > results.length
+            ? `Showing first ${results.length} of ${shortenNumber(
+                totalResults
+              )} results.`
+            : `${totalResults} results.`
+        }`
+      : ""
 
   return (
     <div className="md:max-w-4xl mx-auto flex flex-col gap-4">
@@ -284,22 +307,15 @@ const CentralColumn = () => {
           </a>
         </div>
         <SearchBox {...{ text, setText: cancelLastAndSetText }}></SearchBox>
-        {text === dbText && totalTime !== undefined && (
-          <p className="text-gray-400 text-sm pl-3">
-            {searchMetadata?.partsSearched !== undefined
-              ? `Searched ${shortenNumber(
-                  searchMetadata.partsSearched
-                )} JLCPCB parts in ${totalTime}ms${
-                  serverTime !== undefined && networkTime !== undefined
-                    ? ` (${serverTime}ms server + ${networkTime}ms network)`
-                    : ""
-                }. `
-              : `Search completed in ${totalTime}ms. `}
-            {results.length === 100
-              ? "Showing first 100 results."
-              : `${results.length} results.`}
+        <div
+          aria-live="polite"
+          className="h-10 overflow-hidden px-3 text-gray-400 text-sm leading-5 sm:h-5"
+          title={searchStatus}
+        >
+          <p className="max-h-10 overflow-hidden sm:truncate">
+            {searchStatus}
           </p>
-        )}
+        </div>
         <ErrorBoundary FallbackComponent={ErrorFallback}>
           <Tooltip id="stock" {...ttElProps} />
           <Tooltip id="price" {...ttElProps} />
@@ -363,33 +379,20 @@ interface Part {
 
 interface SearchResponse {
   results: Part[]
+  info: SearchResponseInfo
+}
+
+interface SearchResponseInfo {
   parts_searched: number
+  total_results: number
   server_time_ms: number
 }
 
-type SearchApiResponse = Part[] | SearchResponse
-
 interface SearchResponseMetadata {
-  partsSearched?: number
-  serverTimeMs?: number
-  clientTimeMs?: number
-}
-
-function normalizeSearchResponse(response: SearchApiResponse): {
-  results: Part[]
-  metadata?: SearchResponseMetadata
-} {
-  if (Array.isArray(response)) {
-    return { results: response }
-  }
-
-  return {
-    results: response.results,
-    metadata: {
-      partsSearched: response.parts_searched,
-      serverTimeMs: response.server_time_ms,
-    },
-  }
+  partsSearched: number
+  totalResults: number
+  serverTimeMs: number
+  clientTimeMs: number
 }
 
 export default Home

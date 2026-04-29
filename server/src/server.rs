@@ -29,7 +29,13 @@ const MAX_STALENESS_SECS: u64 = 60 * 60 * 24 * 3;
 #[derive(Serialize)]
 struct SearchResponse {
     results: Vec<Part>,
+    info: SearchInfo,
+}
+
+#[derive(Serialize)]
+struct SearchInfo {
     parts_searched: usize,
+    total_results: usize,
     server_time_ms: u64,
 }
 
@@ -44,13 +50,17 @@ async fn search(
     let start = std::time::Instant::now();
     let results = search_parts_indexed(&mut all_parts, &q);
     let server_time = start.elapsed();
+    let total_results = results.len();
     log::debug!("Searched for {} in {:?}.", q, server_time);
     let prep = results.into_iter().take(100).cloned().collect::<Vec<_>>();
 
     return Json(SearchResponse {
         results: prep,
-        parts_searched,
-        server_time_ms: server_time.as_millis().try_into().unwrap_or(u64::MAX),
+        info: SearchInfo {
+            parts_searched,
+            total_results,
+            server_time_ms: server_time.as_millis().try_into().unwrap_or(u64::MAX),
+        },
     });
 }
 
