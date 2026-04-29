@@ -219,10 +219,6 @@ const CentralColumn = () => {
   const [searchMetadata, setSearchMetadata] = useState<
     SearchResponseMetadata | undefined
   >()
-  const [startTime, setStartTime] = useState<
-    Record<string, number | undefined>
-  >({})
-  const [endTime, setEndTime] = useState<Record<string, number | undefined>>({})
 
   const dbText = useDebounce(text, 150)
 
@@ -233,33 +229,31 @@ const CentralColumn = () => {
 
   useEffect(() => {
     if (data && !isLoading && !error) {
-      const normalized = normalizeSearchResponse(data)
+      const normalized = normalizeSearchResponse(data.body)
       setResults(normalized.results)
-      setSearchMetadata(normalized.metadata)
-      if (!endTime[dbText]) {
-        setEndTime((endTime) => ({ ...endTime, [dbText]: Date.now() }))
-      }
+      setSearchMetadata({
+        ...normalized.metadata,
+        clientTimeMs: data.clientTimeMs,
+      })
     }
-  }, [data, dbText, endTime, isLoading, error, setEndTime, setResults])
+  }, [data, isLoading, error, setResults])
 
   const cancelLastAndSetText = (newText: string) => {
     controller.abort()
     setSearchMetadata(undefined)
-    setStartTime((startTime) => ({ ...startTime, [newText]: Date.now() }))
-    setEndTime((endTime) => ({ ...endTime, [text]: undefined }))
     setText(newText)
   }
 
-  const clientTime =
-    endTime[dbText] && startTime[dbText]
-      ? endTime[dbText]! - startTime[dbText]!
-      : undefined
+  const clientTime = searchMetadata?.clientTimeMs
   const serverTime = searchMetadata?.serverTimeMs
   const networkTime =
     clientTime !== undefined && serverTime !== undefined
       ? Math.max(clientTime - serverTime, 0)
       : undefined
-  const totalTime = clientTime ?? serverTime
+  const totalTime =
+    clientTime !== undefined && serverTime !== undefined
+      ? Math.max(clientTime, serverTime)
+      : clientTime ?? serverTime
 
   return (
     <div className="md:max-w-4xl mx-auto flex flex-col gap-4">
@@ -356,6 +350,7 @@ type SearchApiResponse = Part[] | SearchResponse
 interface SearchResponseMetadata {
   partsSearched?: number
   serverTimeMs?: number
+  clientTimeMs?: number
 }
 
 function normalizeSearchResponse(response: SearchApiResponse): {
@@ -404,11 +399,21 @@ function useCancelableSWR<T>(key: string) {
   const controller = React.useMemo(() => new AbortController(), [key])
 
   return {
-    response: useSWR<T>(key, (url: string) =>
-      fetch(url, { signal: controller.signal }).then(
-        (x) => x.json() as Promise<T>
-      )
-    ),
+    response: useSWR<TimedResponse<T>>(key, async (url: string) => {
+      const startedAt = performance.now()
+      const response = await fetch(url, { signal: controller.signal })
+      const body = (await response.json()) as T
+
+      return {
+        body,
+        clientTimeMs: Math.max(Math.round(performance.now() - startedAt), 0),
+      }
+    }),
     controller,
   }
+}
+
+interface TimedResponse<T> {
+  body: T
+  clientTimeMs: number
 }
