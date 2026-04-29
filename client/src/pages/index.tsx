@@ -221,8 +221,8 @@ const CentralColumn = () => {
 
   const dbText = useDebounce(text, 150)
 
-  const { response, controller } = useCancelableSWR(
-    `${API_ENDPOINT}/search?q=${dbText}`
+  const { response, controller } = useCancelableSWR<Part[]>(
+    `${API_ENDPOINT}/search?${new URLSearchParams({ q: dbText })}`
   )
   const { data, isLoading, error } = response
 
@@ -344,12 +344,14 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue
 }
 
-//@ts-ignore
-function useCancelableSWR(key) {
-  const controller = new AbortController()
+function useCancelableSWR<T>(key: string) {
+  const controller = React.useMemo(() => new AbortController(), [key])
+
   return {
-    response: useSWR(key, (url: string) =>
-      fetch(url, { signal: controller.signal }).then((x) => x.json())
+    response: useSWR<T>(key, (url: string) =>
+      fetch(url, { signal: controller.signal }).then(
+        (x) => x.json() as Promise<T>
+      )
     ),
     controller,
   }
