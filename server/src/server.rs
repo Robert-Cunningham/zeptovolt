@@ -101,10 +101,8 @@ pub async fn webserver(db: PartsDb) {
     let addr = SocketAddr::from(([0, 0, 0, 0], 8090));
 
     log::info!("Serving on 8090...");
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await
-        .unwrap();
+    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+    axum::serve(listener, app).await.unwrap();
 
     // Cancel the refresh_db_periodically task when the server stops
     refresh_db_handle.abort();
