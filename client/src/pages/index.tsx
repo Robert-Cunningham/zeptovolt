@@ -277,7 +277,7 @@ const CentralColumn = () => {
       ? Math.max(clientTime, serverTime)
       : clientTime ?? serverTime
   const searchStatus =
-    text === dbText && totalTime !== undefined
+    text.trim() !== "" && text === dbText && totalTime !== undefined
       ? `${
           searchMetadata?.partsSearched !== undefined
             ? `Searched ${shortenNumber(
@@ -325,6 +325,10 @@ const CentralColumn = () => {
             </svg>
           </a>
         </div>
+        <p className="px-3 text-center text-sm leading-5 text-slate-600">
+          Zeptovolt is a Rust-backed search for JLCPCB parts with full regex
+          support, updated every day from the public parts dataset.
+        </p>
         <SearchBox {...{ text, setText: cancelLastAndSetText }}></SearchBox>
         <div
           aria-live="polite"
