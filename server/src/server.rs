@@ -1,15 +1,11 @@
-use std::{
-    collections::HashMap,
-    net::SocketAddr,
-    sync::Arc,
-    time::{Duration, Instant},
-};
+use std::{collections::HashMap, net::SocketAddr, sync::Arc, time::Duration};
 
 use axum::{
     extract::{Query, State},
     routing::get,
     Json, Router,
 };
+use serde::Serialize;
 use tower::ServiceBuilder;
 use tower_http::cors::{Any, CorsLayer};
 
@@ -30,19 +26,32 @@ async fn status() -> &'static str {
 
 const MAX_STALENESS_SECS: u64 = 60 * 60 * 24 * 3;
 
+#[derive(Serialize)]
+struct SearchResponse {
+    results: Vec<Part>,
+    parts_searched: usize,
+    server_time_ms: u64,
+}
+
 #[axum_macros::debug_handler]
 async fn search(
     Query(params): Query<HashMap<String, String>>,
     State(wss): State<WebServerState>,
-) -> Json<Vec<Part>> {
+) -> Json<SearchResponse> {
     let q = params.get("q").unwrap().to_string();
     let mut all_parts = wss.db.lock().await;
-    let start = Instant::now();
+    let parts_searched = all_parts.all_parts.len();
+    let start = std::time::Instant::now();
     let results = search_parts_indexed(&mut all_parts, &q);
-    log::debug!("Searched for {} in {:?}.", q, start.elapsed());
+    let server_time = start.elapsed();
+    log::debug!("Searched for {} in {:?}.", q, server_time);
     let prep = results.into_iter().take(100).cloned().collect::<Vec<_>>();
 
-    return Json(prep);
+    return Json(SearchResponse {
+        results: prep,
+        parts_searched,
+        server_time_ms: server_time.as_millis().try_into().unwrap_or(u64::MAX),
+    });
 }
 
 pub async fn webserver(db: PartsDb) {

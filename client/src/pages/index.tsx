@@ -216,6 +216,9 @@ const API_ENDPOINT =
 const CentralColumn = () => {
   const [text, setText] = useState<string>("")
   const [results, setResults] = useState<Part[]>([])
+  const [searchMetadata, setSearchMetadata] = useState<
+    SearchResponseMetadata | undefined
+  >()
   const [startTime, setStartTime] = useState<
     Record<string, number | undefined>
   >({})
@@ -223,29 +226,40 @@ const CentralColumn = () => {
 
   const dbText = useDebounce(text, 150)
 
-  const { response, controller } = useCancelableSWR<Part[]>(
+  const { response, controller } = useCancelableSWR<SearchApiResponse>(
     `${API_ENDPOINT}/search?${new URLSearchParams({ q: dbText })}`
   )
   const { data, isLoading, error } = response
 
   useEffect(() => {
-    if (data && !isLoading && !error && data !== results) {
-      setResults(data)
-      if (!endTime[text]) {
-        setEndTime((endTime) => ({ ...endTime, [text]: Date.now() }))
+    if (data && !isLoading && !error) {
+      const normalized = normalizeSearchResponse(data)
+      setResults(normalized.results)
+      setSearchMetadata(normalized.metadata)
+      if (!endTime[dbText]) {
+        setEndTime((endTime) => ({ ...endTime, [dbText]: Date.now() }))
       }
     }
-  }, [data, setEndTime, setResults, text])
+  }, [data, dbText, endTime, isLoading, error, setEndTime, setResults])
 
   const cancelLastAndSetText = (newText: string) => {
     controller.abort()
+    setSearchMetadata(undefined)
     setStartTime((startTime) => ({ ...startTime, [newText]: Date.now() }))
     setEndTime((endTime) => ({ ...endTime, [text]: undefined }))
     setText(newText)
   }
 
-  const time =
-    endTime[text] && startTime[text] && endTime[text]! - startTime[text]!
+  const clientTime =
+    endTime[dbText] && startTime[dbText]
+      ? endTime[dbText]! - startTime[dbText]!
+      : undefined
+  const serverTime = searchMetadata?.serverTimeMs
+  const networkTime =
+    clientTime !== undefined && serverTime !== undefined
+      ? Math.max(clientTime - serverTime, 0)
+      : undefined
+  const totalTime = clientTime ?? serverTime
 
   return (
     <div className="md:max-w-4xl mx-auto flex flex-col gap-4">
@@ -254,9 +268,17 @@ const CentralColumn = () => {
           Fast JLCPCB Parts Search
         </p>
         <SearchBox {...{ text, setText: cancelLastAndSetText }}></SearchBox>
-        {text && time && (
+        {text === dbText && totalTime !== undefined && (
           <p className="text-gray-400 text-sm pl-3">
-            Searched 287k JLCPCB parts in {time}ms.{" "}
+            {searchMetadata?.partsSearched !== undefined
+              ? `Searched ${shortenNumber(
+                  searchMetadata.partsSearched
+                )} JLCPCB parts in ${totalTime}ms${
+                  serverTime !== undefined && networkTime !== undefined
+                    ? ` (${serverTime}ms server + ${networkTime}ms network)`
+                    : ""
+                }. `
+              : `Search completed in ${totalTime}ms. `}
             {results.length === 100
               ? "Showing first 100 results."
               : `${results.length} results.`}
@@ -321,6 +343,36 @@ interface Part {
   basic_or_extended: string
   price: number
   stock: number
+}
+
+interface SearchResponse {
+  results: Part[]
+  parts_searched: number
+  server_time_ms: number
+}
+
+type SearchApiResponse = Part[] | SearchResponse
+
+interface SearchResponseMetadata {
+  partsSearched?: number
+  serverTimeMs?: number
+}
+
+function normalizeSearchResponse(response: SearchApiResponse): {
+  results: Part[]
+  metadata?: SearchResponseMetadata
+} {
+  if (Array.isArray(response)) {
+    return { results: response }
+  }
+
+  return {
+    results: response.results,
+    metadata: {
+      partsSearched: response.parts_searched,
+      serverTimeMs: response.server_time_ms,
+    },
+  }
 }
 
 export default Home
