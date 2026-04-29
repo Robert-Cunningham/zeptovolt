@@ -227,7 +227,7 @@ pub async fn download_db() -> Result<PartsDb, anyhow::Error> {
     let shards = component_shards(&manifest)?;
     let attributes = Arc::new(get_attributes(&manifest).await?);
 
-    println!("Downloading {} component shards...", shards.len());
+    log::info!("Downloading {} component shards...", shards.len());
 
     let results = stream::iter(shards.into_iter().map(|shard| {
         let attributes = attributes.clone();
@@ -237,7 +237,7 @@ pub async fn download_db() -> Result<PartsDb, anyhow::Error> {
     .collect::<Vec<_>>()
     .await;
 
-    println!("Done.");
+    log::info!("Done.");
 
     let mut all_parts = Vec::new();
     for result in results {

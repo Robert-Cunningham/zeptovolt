@@ -39,7 +39,7 @@ async fn search(
     let mut all_parts = wss.db.lock().await;
     let start = Instant::now();
     let results = search_parts_indexed(&mut all_parts, &q);
-    println!("Searched for {} in {:?}.", q, start.elapsed());
+    log::debug!("Searched for {} in {:?}.", q, start.elapsed());
     let prep = results.into_iter().take(100).cloned().collect::<Vec<_>>();
 
     return Json(prep);
@@ -58,7 +58,7 @@ pub async fn webserver(db: PartsDb) {
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 8090));
 
-    println!("Serving on 8090...");
+    log::info!("Serving on 8090...");
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
         .await
@@ -72,17 +72,17 @@ async fn refresh_db_periodically(db: Arc<tokio::sync::Mutex<PartsDb>>) {
     let refresh_interval = Duration::from_secs(MAX_STALENESS_SECS);
     loop {
         tokio::time::sleep(refresh_interval).await;
-        println!("Database stale, updating database...");
+        log::info!("Database stale, updating database...");
         let new_db_result = download_db().await;
 
         match new_db_result {
             Ok(new_db) => {
                 let mut db_write_lock = db.lock().await;
                 *db_write_lock = new_db;
-                println!("Database updated successfully.");
+                log::info!("Database updated successfully.");
             }
             Err(e) => {
-                eprintln!("Failed to update database: {:?}", e);
+                log::error!("Failed to update database: {:?}", e);
             }
         }
     }
